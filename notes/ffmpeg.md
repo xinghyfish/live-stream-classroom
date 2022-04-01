@@ -58,22 +58,37 @@ ffmpeg -i ${input_video} -f flv rtmp://${server}/live/${streamName}
 - `-i`：`input`，表示输入视频文件，后跟`${input_video}$`表示视频文件路径/URL。
 - `-f`：`format`，强制ffmpeg采用某种格式，后跟对应的格式。
 
-
 # 推流直播demo设计
 
-## 推流直播实现思路
+## 直播流程
+
+### 逻辑流程
 
 1. 调用摄像头获取音频和图像
 2. 将视频分割为帧
-3. 将每一帧进行需求加工后
-4. 将此帧写入pipe管道
-5. 利用ffmpeg进行推流直播
+3. 将每一帧进行需求加工后，将此帧写入pipe管道
+4. 利用`ffmpeg`进行推流直播
 
-- 环境配置：
+环境配置：`nginx`服务器 + `nginx-rtmp-module` + `ffmpeg`
 
-1. `nginx`服务器
-2. `nginx-rtmp-module`
-3. `ffmpeg`
+### 技术实现
+
+- 【视频采集端】：视频输入的数据采集设备
+- 【直播流视频服务端】：一台`Nginx`服务器，采集视频录制端传输的视频流(`H264/ACC`编码)，由服务器端进行解析编码，推送`RTMP/HLS`格式视频流至视频播放端。
+- 【视频播放端】：视频输出端设备相关软件，本项目计划采用`HTML5`的`video`标签
+
+因此，需要针对上述技术进行实现。
+
+## 推拉流测试
+
+在对`nginx`进行配置的过程中遇到了一些困难，在实际进行推流、拉流测试的过程中遇到了非常多的错误（`Unknown error`，`I/O error`等各种类型的错误），最后按照参考内容5介绍的方法成功实现了的推流拉流的测试。下面是一些配置和指令：
+
+- 推流地址：`rtmp://127.0.0.1:1935/live/home`
+- 推流测试：`ffmpeg.exe -re -i ${input-file-path} -vcodec libx264 -acodec aac -f flv rtmp://127.0.0.1:1935/live/home`
+- 拉流测试：`ffplay.exe rtmp://localhost:1935/live/home`
+
+按照上面的指令，终于完成了推拉流`mp4`文件的简单测试。初步猜测可能是文件路径中`\`写为`/`或路径没有均采取小写导致的。实际测试时，推流的文件地址为：`D:\server\videos\test.mp4`，但是测试时正确的路径为`d:\server\videos\test.mp4`，终于完成测试。明天预计实现摄像头和麦克风等硬件设备的推流测试。计划项目后期将`nginx.conf`配置文件的相关内容进行更为深入的探究。
+
 
 # 参考内容
 
@@ -81,3 +96,4 @@ ffmpeg -i ${input_video} -f flv rtmp://${server}/live/${streamName}
 2. [Windows下载FFmpeg最新版（踩了一上午的坑终于成功） - 知乎 (zhihu.com)](https://zhuanlan.zhihu.com/p/390924591)
 3. [Windows 搭建 nginx RTMP 服务器 - fengMisaka - 博客园 (cnblogs.com)](https://www.cnblogs.com/linuxAndMcu/p/12517787.html#:~:text=%E6%8C%89%E4%BD%8F%20windows%20%E9%94%AE%20%2BR%EF%BC%8C%E8%BE%93%E5%85%A5%20cmd%EF%BC%8C%E8%BF%9B%E5%85%A5%20cmd%20%E5%91%BD%E4%BB%A4%E7%AA%97%E5%8F%A3%EF%BC%8C%E8%BF%9B%E5%85%A5,nginx%20%E7%9B%AE%E5%BD%95%EF%BC%9A%20cd%20E%3Atechnology%5B%26ng%26%5Dinx-1.17.9%20%EF%BC%8C%E7%84%B6%E5%90%8E%E5%90%AF%E5%8A%A8%20nginx%20rtmp%20%E6%9C%8D%E5%8A%A1%E5%99%A8%EF%BC%9A)
 4. [python-ffmpeg-video-streaming · PyPI](https://pypi.org/project/python-ffmpeg-video-streaming/)
+5. [Windows 搭建 nginx rtmp服务器 - microsoftzhcn - 博客园 (cnblogs.com)](https://www.cnblogs.com/sntetwt/p/11435564.html)
