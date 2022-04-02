@@ -89,11 +89,30 @@ ffmpeg -i ${input_video} -f flv rtmp://${server}/live/${streamName}
 
 按照上面的指令，终于完成了推拉流`mp4`文件的简单测试。初步猜测可能是文件路径中`\`写为`/`或路径没有均采取小写导致的。实际测试时，推流的文件地址为：`D:\server\videos\test.mp4`，但是测试时正确的路径为`d:\server\videos\test.mp4`，终于完成测试。明天预计实现摄像头和麦克风等硬件设备的推流测试。计划项目后期将`nginx.conf`配置文件的相关内容进行更为深入的探究。
 
+### 硬件设备数据推流
+
+在直播时，我们主要需要的**功能**为：共享屏幕（桌面）、开启视频（摄像头）和开启麦克风（麦克风）。为了能够准确访问相关设备，我们需要获取相关设备的名称。`ffmpeg`支持通过设备名称访问设备。有两种方法可以访问设备名称（以Windows端为例）
+
+1. 打开Windows端的【设备管理器】，查看：【音频输入与输出】得到麦克风名称，【摄像头】获取摄像头名称
+2. 在命令行中输入：`ffmpeg -list_devices true -f dshow -i dummy`，得到设备名称列表
+
+得到相关设备名称后，即可进行硬件设备的数据推流，相关指令如下：
+
+- **摄像头推流**：`ffmpeg -f dshow -i video="${camera-name}" -vcodec libx264 -preset:v ultrafast -tune:v zerolatency -f flv rtmp://127.0.0.1:1935/live/home`
+- **麦克风推流**：`ffmpeg -f dshow -i audio="${microphone-name}" -vcodec libx264 -preset:v ultrafast -tune:v zerolatency -f flv rtmp://127.0.0.1:1935/live/home`
+- **摄像头&麦克风推流**：`ffmpeg -f dshow -i video="${camera-name}" -f dshow -i audio="${microphone-name}" -vcodec libx264 -preset:v ultrafast -tune:v zerolatency -f flv rtmp://127.0.0.1:1935/live/home`
+- **屏幕推流**：`ffmpeg -f gdigrab -i desktop -vcodec libx264 -preset:v ultrafast -tune:v zerolatency -f flv rtmp://127.0.0.1:1935/live/home`
+- **屏幕&麦克风推流***：`ffmpeg -f *gdigrab* -i "1:0" -vcodec libx264 -preset ultrafast -acodec libmp3lame -ar 44100 -ac 1 -f flv rtmp://127.0.0.1:1935/rtmplive/home`
+- **屏幕&麦克风&摄像头**：`ffmpeg -f avfoundation -framerate 30 -i "1:0" \-f avfoundation -framerate 30 -video_size 640x480 -i "0" \-c:v libx264 -preset ultrafast \-filter_complex 'overlay=main_w-overlay_w-10:main_h-overlay_h-10' -acodec libmp3lame -ar 44100 -ac 1 -f flv rtmp://localhost:1935/rtmplive/home`
+
+注意，上述命令仅作为测试时的参考，用于确定`nginx rtmp`相关配置及`ffmpeg`配置成果情况，实际应当参考相关需求设置`ffmpeg`参数。
+
 
 # 参考内容
 
-1. [A quick guide to using FFmpeg to convert media files | Opensource.com](https://opensource.com/article/17/6/ffmpeg-convert-media-file-formats)
-2. [Windows下载FFmpeg最新版（踩了一上午的坑终于成功） - 知乎 (zhihu.com)](https://zhuanlan.zhihu.com/p/390924591)
-3. [Windows 搭建 nginx RTMP 服务器 - fengMisaka - 博客园 (cnblogs.com)](https://www.cnblogs.com/linuxAndMcu/p/12517787.html#:~:text=%E6%8C%89%E4%BD%8F%20windows%20%E9%94%AE%20%2BR%EF%BC%8C%E8%BE%93%E5%85%A5%20cmd%EF%BC%8C%E8%BF%9B%E5%85%A5%20cmd%20%E5%91%BD%E4%BB%A4%E7%AA%97%E5%8F%A3%EF%BC%8C%E8%BF%9B%E5%85%A5,nginx%20%E7%9B%AE%E5%BD%95%EF%BC%9A%20cd%20E%3Atechnology%5B%26ng%26%5Dinx-1.17.9%20%EF%BC%8C%E7%84%B6%E5%90%8E%E5%90%AF%E5%8A%A8%20nginx%20rtmp%20%E6%9C%8D%E5%8A%A1%E5%99%A8%EF%BC%9A)
-4. [python-ffmpeg-video-streaming · PyPI](https://pypi.org/project/python-ffmpeg-video-streaming/)
-5. [Windows 搭建 nginx rtmp服务器 - microsoftzhcn - 博客园 (cnblogs.com)](https://www.cnblogs.com/sntetwt/p/11435564.html)
+1. `ffmpeg`基础：[A quick guide to using FFmpeg to convert media files | Opensource.com](https://opensource.com/article/17/6/ffmpeg-convert-media-file-formats)
+2. `windows`系统下载`ffmpeg`及环境配置：[Windows下载FFmpeg最新版（踩了一上午的坑终于成功） - 知乎 (zhihu.com)](https://zhuanlan.zhihu.com/p/390924591)
+3. `windows`端搭建`nginx rtmp`服务器：[Windows 搭建 nginx RTMP 服务器 - fengMisaka - 博客园 (cnblogs.com)](https://www.cnblogs.com/linuxAndMcu/p/12517787.html#:~:text=%E6%8C%89%E4%BD%8F%20windows%20%E9%94%AE%20%2BR%EF%BC%8C%E8%BE%93%E5%85%A5%20cmd%EF%BC%8C%E8%BF%9B%E5%85%A5%20cmd%20%E5%91%BD%E4%BB%A4%E7%AA%97%E5%8F%A3%EF%BC%8C%E8%BF%9B%E5%85%A5,nginx%20%E7%9B%AE%E5%BD%95%EF%BC%9A%20cd%20E%3Atechnology%5B%26ng%26%5Dinx-1.17.9%20%EF%BC%8C%E7%84%B6%E5%90%8E%E5%90%AF%E5%8A%A8%20nginx%20rtmp%20%E6%9C%8D%E5%8A%A1%E5%99%A8%EF%BC%9A)
+4. `python`中`ffmpeg-video-streaming`包：[python-ffmpeg-video-streaming · PyPI](https://pypi.org/project/python-ffmpeg-video-streaming/)
+5. `ffmpeg`推拉流测试：[Windows 搭建 nginx rtmp服务器 - microsoftzhcn - 博客园 (cnblogs.com)](https://www.cnblogs.com/sntetwt/p/11435564.html)
+6. 前端`flv.js`拉流介绍：[视频直播知识之四：直播DEMO——RTMP推流和HTTP-FLV拉流 | murphylee blog (seminelee.com)](https://seminelee.com/2021/06/20/video-4/)
