@@ -61,3 +61,4 @@ def rtmp(rtmpUrl="rtmp://127.0.0.1:1935/live/home", camera_path=0):
 
 if __name__ == '__main__':
     rtmp()
+    pass
