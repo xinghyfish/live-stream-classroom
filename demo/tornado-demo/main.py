@@ -13,6 +13,20 @@ class IndexHandler(tornado.web.RequestHandler):
     def get(self):
         self.write("好看的皮囊千篇一律，有趣的灵魂万里挑一。")
 
+class ProfileHandler(tornado.web.RequestHandler):
+    def initialize(self, database):
+        self.database = database
+
+    def get(self):
+        pass
+
+    def post(self):
+        pass
+
+class DetailHandler(tornado.web.RequestHandler):
+    def get(self):
+        remote_ip = self.request.remote_ip
+        host = self.request.host
 
 if __name__ == '__main__':
     # create an app object

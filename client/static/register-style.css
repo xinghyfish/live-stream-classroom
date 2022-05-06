@@ -1,0 +1,103 @@
+body {
+    background-color: rgb(166,201,242);
+}
+
+.wrap {
+    position: absolute;
+    background: rgb(242,242,247);
+    border: black;
+    left: 25%;
+    right: 25%;
+    height: 100%;
+}
+
+.web-title {
+    position: relative;
+    text-align: center;
+    font-family: "黑体", serif;
+    font-size: 28px;
+    top: 20px;
+}
+
+form {
+    position: relative;
+    top: 10px;
+}
+
+.wrap .item {
+    position: relative;
+    padding: 15px;
+    top: 20px;
+    bottom: 20px;
+    font-size: 18px;
+}
+
+#image {
+    position: absolute;
+    left: 35%;
+    height: 70px;
+    padding: 10px;
+    top: 20px;
+    bottom: 10px
+}
+
+.input {
+    position: absolute;
+    margin: auto;
+    height: 26px;
+    width: 288px;
+    box-sizing: border-box;
+    padding: 10px;
+    padding-right: 0;
+    margin-bottom: 17px;
+    border-radius: 3px;
+    border: solid #000000 1px;
+    left: 36%;
+}
+
+.select {
+    position: absolute;
+    margin: auto;
+    left: 36%;
+    font-size: 14px;
+    height: 26px;
+    width: 108px;
+}
+
+.wrap .image-item {
+    position: relative;
+    height: 80px;
+    padding: 15px;
+    top: 10px;
+    font-size: 18px;
+}
+
+.notification {
+    position: relative;
+    left: 120px;
+    font-size: 18px;
+    font-family: "等线", serif;
+}
+
+.button-item {
+    position: relative;
+    text-align: center;
+}
+
+#submit-button {
+    position: relative;
+    top: 90px;
+    margin: auto;
+    border-radius: 7px;
+    height: 40px;
+    width: 140px;
+    font-size: 20px;
+    background: white;
+}
+
+#avatar {
+    position: relative;
+    left: 320px;
+    top: 50%;
+}
+

@@ -1,0 +1,106 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8" content="text/html">
+    <title>注册</title>
+    <link href="{{ static_url('register-style.css') }}" rel="stylesheet"/>
+
+    <script src="https://cdn.staticfile.org/jquery/2.0.0/jquery.min.js" type="text/javascript"></script>
+    <script>
+        imgUrl = $("#image").src;
+
+        function gen_base64(file) {
+            var r = new FileReader();  //本地预览
+
+            r.readAsDataURL(file);    //Base64
+            r.onload = function(){
+                document.getElementById('base64_output').value = r.result;
+
+                str=r.result;
+                console.info(str);
+                return r.result;
+            }
+        }
+
+        function showImg(input) {
+            var file = input.files[0];
+            imgUrl = window.URL.createObjectURL(file);
+            document.getElementById("image").src = imgUrl;
+        }
+
+        var user = {};
+        user["username"] = $("#username").value;
+        user["passwd"] = $("#passwd1").value;
+        user["confirm-passwd"] = $("#passwd2").value;
+        user["nickname"] = $("#nickname").value;
+        user["email"] = $("#email").value;
+        user["type"] = $("#type").value;
+        user["school"] = $("#school").value;
+        user["userID"] = $("#userID").value;
+        user["avatar"] = $("#image").value;
+
+        $("submit-button").click(function (){
+            $.ajax({
+                type: "POST",
+                url: "/register",
+                data: user,
+                success:function () {
+                    console.log("success");
+                }
+            })
+        });
+    </script>
+</head>
+<body>
+<div class="wrap">
+    <div class="web-title">在线教学平台账号注册</div>
+    <form action="/register" method="post" id="register-form">
+        <div class="item">
+            <b style="position: relative; left: 200px">账号*</b>
+            <label><input type="text" id="username" name="username" class="input" placeholder="请输入您的账号"></label>
+        </div>
+        <div class="item">
+            <b style="position: relative; left: 200px">密码*</b>
+            <label><input type="password" id="passwd1" name="passwd" class="input" placeholder="请输入您的密码"></label>
+        </div>
+        <div class="item">
+            <b style="position: relative; left: 163px">确认密码*</b>
+            <label><input type="password" id="passwd2" name="confirm-passwd" class="input" placeholder="请确认您的密码"></label>
+        </div>
+        <div class="item">
+            <b style="position: relative; left: 200px">昵称*</b>
+            <label><input type="text" id="nickname" name="nickname" class="input" placeholder="请输入您的昵称"></label>
+        </div>
+        <div class="image-item">
+            <b style="position: relative; left: 200px; top: 50%">头像</b>
+            <img id="image" src="../static/GitHub_logo.png" alt="头像"/>
+            <input type="file" name="avatar" id="avatar" onchange="showImg(this)">
+        </div>
+        <div class="item">
+            <b style="position: relative; left: 200px">邮箱</b>
+            <label><input type="text" id="email" name="email" class="input" placeholder="请输入您的邮箱"></label>
+        </div>
+        <div class="item">
+            <b style="position: relative; left: 200px">身份</b>
+            <label><select class="select" id="type" name="type">
+                <option value="学生">学生</option>
+                <option value="老师">老师</option>
+            </select></label>
+        </div>
+        <div class="item">
+            <b style="position: relative; left: 200px">学校</b>
+            <input type="text" id="school" name="school" class="input" placeholder="请输入您的学校">
+        </div>
+        <div class="item">
+            <b style="position: relative; left: 173px">学/工号</b>
+            <input type="text" id="userID" name="userID" class="input" placeholder="请输入您的学/工号">
+        </div>
+        <div class="button-item">
+            <button id="submit-button">注册</button>
+        </div>
+    </form>
+    <div class="notification"><b>注：标记为*的项目为必填项，其他均为选填项</b></div>
+</div>
+
+</body>
+</html>

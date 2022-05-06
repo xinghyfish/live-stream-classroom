@@ -1,0 +1,34 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Title</title>
+    <script type="text/javascript" src=" http://apps.bding.com/libs/jquery/1.6.4/jquery.min.js"></script>
+</head>
+<body>
+<p id="message"> Click the button to hide me. </p>
+
+<!-- application of jQuery -->
+<button type="button">Toggle the message</button>
+
+<script>
+    var btn_selector = $("button");
+    btn_selector.hide();
+
+    btn_selector.fadeTo("slow", 0.5, function(){
+        alert("已经完成");
+    });
+
+    $("p").animate({
+        left: '100px',
+        width: '650px'
+    },
+
+    "fast", function(){
+        alert("自定义动画已完成")
+        });
+    $("#paragraph1").stop()
+    
+</script>
+</body>
+</html>
