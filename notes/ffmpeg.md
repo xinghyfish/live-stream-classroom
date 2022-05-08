@@ -79,7 +79,7 @@ ffmpeg -i ${input_video} -f flv rtmp://${server}/live/${streamName}
 
 因此，需要针对上述技术进行实现。
 
-## 推拉流测试
+## 推拉流测试(Windows端)
 
 在对`nginx`进行配置的过程中遇到了一些困难，在实际进行推流、拉流测试的过程中遇到了非常多的错误（`Unknown error`，`I/O error`等各种类型的错误），最后按照参考内容5介绍的方法成功实现了的推流拉流的测试。下面是一些配置和指令：
 
@@ -106,6 +106,11 @@ ffmpeg -i ${input_video} -f flv rtmp://${server}/live/${streamName}
 - **屏幕&麦克风&摄像头**：`ffmpeg -f avfoundation -framerate 30 -i "1:0" \-f avfoundation -framerate 30 -video_size 640x480 -i "0" \-c:v libx264 -preset ultrafast \-filter_complex 'overlay=main_w-overlay_w-10:main_h-overlay_h-10' -acodec libmp3lame -ar 44100 -ac 1 -f flv rtmp://localhost:1935/rtmplive/home`
 
 注意，上述命令仅作为测试时的参考，用于确定`nginx rtmp`相关配置及`ffmpeg`配置成果情况，实际应当参考相关需求设置`ffmpeg`参数。
+
+## 推拉流测试(Linux端)
+> 上课的时候被老师建议用`linux`来搭建系统QAQ……虽然之前尝试过，但是在做推流测试的时候踩了大坑，遂半途弃坑……但是觉得还是逃不掉，不如勇敢面对吧。
+
+（跑路了，左转`WebRTC.md`→_→）
 
 
 # 参考内容
