@@ -9,19 +9,6 @@
     <script>
         imgUrl = $("#image").src;
 
-        function gen_base64(file) {
-            var r = new FileReader();  //本地预览
-
-            r.readAsDataURL(file);    //Base64
-            r.onload = function(){
-                document.getElementById('base64_output').value = r.result;
-
-                str=r.result;
-                console.info(str);
-                return r.result;
-            }
-        }
-
         function showImg(input) {
             var file = input.files[0];
             imgUrl = window.URL.createObjectURL(file);
@@ -39,7 +26,7 @@
         user["userID"] = $("#userID").value;
         user["avatar"] = $("#image").value;
 
-        $("submit-button").click(function (){
+        $("#submit-button").click(function (){
             $.ajax({
                 type: "POST",
                 url: "/register",
@@ -48,6 +35,10 @@
                     console.log("success");
                 }
             })
+        });
+
+        $("#avatar").change(function () {
+            let form = new Fo
         });
     </script>
 </head>
@@ -73,7 +64,7 @@
         </div>
         <div class="image-item">
             <b style="position: relative; left: 200px; top: 50%">头像</b>
-            <img id="image" src="../static/GitHub_logo.png" alt="头像"/>
+            <img id="image" src="../static/github.jpg" alt="头像"/>
             <input type="file" name="avatar" id="avatar" onchange="showImg(this)">
         </div>
         <div class="item">

@@ -5,7 +5,7 @@ def get_conn():
         host='127.0.0.1',
         user='root',
         password='123456',
-        database='live_stream_classroom',
+        database='online_teaching',
         charset='utf8'
     )
 

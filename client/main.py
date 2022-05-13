@@ -18,6 +18,11 @@ if __name__ == '__main__':
         (r'/log', LoginHandler),
         (r'/hello', HelloHandler),
         (r'/register', RegisterHandler),
+        (r'/teacher/user-web', TeacherUserWebHandler),
+        (r'/teacher/course-info', TeacherCourseInfoHandler),
+        (r'/teacher/about', TeacherAboutHandler),
+        (r'/teacher/add-course', TeacherAddCourseHandler),
+        (r'/avatar/<username>', AvatarHandler),
     ]
     template_path = os.path.join(os.path.dirname(__file__), "view")
     static_path = os.path.join(os.path.dirname(__file__), "static")

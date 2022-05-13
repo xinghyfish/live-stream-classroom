@@ -1,0 +1,124 @@
+{% extends base.html %}
+
+<script>
+    var course = {};
+    course["name"]    = $("#name").value;
+    coutse["id"]      = $("#id").value;
+    course["day"]     = $("#day").value;
+    course["hour1"]   = $("#hour1").value;
+    course["minute1"] = $("#minute1").value;
+    course["hour2"]   = $("#hour2").value;
+    course["minute2"] = $("#minute2").value;
+    course["class"]   = $("#class").value;
+    course["count"]   = $("#count").value;
+    course["credit"]  = $("#credit").value;
+    course["ps"]      = $("#ps").value;
+
+    $("submit-button").click(function () {
+        $.ajax({
+            type: "POST",
+            url: "/teacher/add-course",
+            data: course,
+            success:function () {
+                console.log("success");
+            }
+        });
+    });
+</script>
+
+{% block info %}
+<div class="subtitle">添加课程</div>
+<form method="post" class="info-panel">
+    <div class="item">
+        <p class="item-label">课程名称*</p>
+        <label>
+            <input type="text" id="name" name="name" class="input" placeholder=""/>
+        </label>
+    </div>
+    <div class="item">
+        <p class="item-label">课程代号*</p>
+        <label>
+            <input type="text" id="id" name="id" class="input" placeholder=""/>
+        </label>
+    </div>
+    <div class="item">
+        <p class="item-label">授课时间*</p>
+        <div class="sub-item">
+            <p class="sub-item-label">日期</p>
+            <label>
+                <select id="day" name="day">
+                    <option value="星期一">星期一</option>
+                    <option value="星期二">星期二</option>
+                    <option value="星期三">星期三</option>
+                    <option value="星期三">星期四</option>
+                    <option value="星期五">星期五</option>
+                </select>
+            </label>
+        </div>
+        <div class="sub-item2">
+            <p class="sub-item-label">开始时间</p>
+            <label>
+                <select class="hour" id="hour1" name="hour1">
+                    {% for i in range(8, 23) %}
+                        <option>{{ str(i) if i > 9 else '0' + str(i) }}</option>
+                    {% end %}
+                </select>
+            </label>
+            <p style="position: relative; display: inline; left: 470px">时</p>
+            <label>
+                <select class="minute" id="minute1" name="minute1">
+                    {% for i in range(0, 60, 10) %}
+                        <option>{{ str(i) if i > 9 else '0' + str(i) }}</option>
+                    {% end %}
+                </select>
+            </label>
+            <p style="position: relative; display: inline; left: 480px">分</p>
+        </div>
+        <div class="sub-item2">
+            <p class="sub-item-label">结束时间</p>
+            <label>
+                <select class="hour" id="hour2" name="hour2">
+                    {% for i in range(24) %}
+                        <option>{{ str(i) if i > 9 else '0' + str(i) }}</option>
+                    {% end %}
+                </select>
+            </label>
+            <p style="position: relative; display: inline; left: 470px">时</p>
+            <label>
+                <select class="minute" id="minute2" name="minute2">
+                    {% for i in range(0, 60, 10) %}
+                        <option>{{ str(i) if i > 9 else '0' + str(i) }}</option>
+                    {% end %}
+                </select>
+            </label>
+            <p style="position: relative; display: inline; left: 480px">分</p>
+        </div>
+    </div>
+    <div class="item">
+        <p class="item-label">授课班级*</p>
+        <label>
+            <input type="text" id="class" name="class" class="input" placeholder=""/>
+        </label>
+    </div>
+    <div class="item">
+        <p class="item-label">授课人数*</p>
+        <label>
+            <input type="text" id="count" name="count" class="input" placeholder=""/>
+        </label>
+    </div>
+    <div class="item">
+        <p class="item-label">课程学分*</p>
+        <label>
+            <input type="text" id="credit" name="credit" class="input" placeholder=""/>
+        </label>
+    </div>
+    <div class="item">
+        <p class="item-label">课程备注</p>
+        <label for="ps">
+            <textarea id="ps" name="ps" class="textarea-input"></textarea>
+        </label>
+    </div>
+    <div class="notification">注：标记为*的项目为必填项，其他均为选填项</div>
+    <button id="submit-button">确定添加</button>
+</form>
+{% end %}

@@ -5,7 +5,7 @@ import tornado.options
 from tornado.httpserver import HTTPServer
 
 # define a global tornado configuration
-tornado.options.define('port', default=8000, type=int, help="This is the port >for application")
+tornado.options.define('port', default=8888, type=int, help="This is the port >for application")
 
 # define handler type
 class IndexHandler(tornado.web.RequestHandler):

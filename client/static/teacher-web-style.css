@@ -1,0 +1,236 @@
+* {
+    margin: 0;
+    padding: 0;
+}
+
+body {
+    background-color: white;
+    margin: 0;
+    overflow-x: hidden;
+}
+
+#web-title {
+    position: relative;
+    background-color: rgb(229,229,234);
+    padding-top: 10px;
+    padding-bottom: 10px;
+    text-align: center;
+    font-size: 20px;
+    color: black;
+    height: 7%;
+    width: 100%;
+}
+
+#main {
+    position: absolute;
+    width: 100%;
+    height: 93%;
+}
+
+#menu {
+    position: relative;
+    float: left;
+    width: 225px;
+    height: 100%;
+    background-color: rgb(242, 242, 247);
+}
+
+/* Style the list inside the menu */
+ul {
+    list-style-type: none;
+    padding: 0;
+}
+
+li {
+    position: relative;
+    width: 99%;
+    font-size: 18px;
+    padding-top: 20px;
+    padding-bottom: 20px;
+    margin: auto;
+}
+
+a {
+    position: relative;
+    text-decoration: none;
+    color: rgb(50, 50, 50);
+    left: 70px;
+}
+
+#panel {
+    position: relative;
+    margin-left: 15%;
+    height: 100%;
+    background-color: white;
+}
+
+#user-info {
+    padding-left: 30px;
+}
+
+.subtitle {
+    position: relative;
+    text-align: center;
+    height: 5%;
+    width: 100%;
+    font-size: 20px;
+    top: 20px;
+}
+#course-table {
+    position: relative;
+    top: 5%;
+    left: 40px;
+    border: solid gray;
+    border-width: 1px 0 0 1px;
+}
+
+td {
+    position: relative;
+    font-size: 18px;
+    width: 200px;
+    height: 35px;
+    border: solid lightgray;
+    border-width: 0 1px 1px 0;
+    text-align: center;
+}
+
+.head {
+    background-color: rgb(242, 242, 247);
+}
+
+.input {
+    position: absolute;
+    height: 26px;
+    width: 288px;
+    box-sizing: border-box;
+    padding: 10px 0 10px 10px;
+    margin: auto auto 17px;
+    border-radius: 3px;
+    border: solid #000000 1px;
+    left: 520px;
+}
+
+.item {
+    position: relative;
+    padding: 8px;
+    top: 20px;
+    bottom: 20px;
+    font-size: 18px;
+}
+
+.image-item {
+    position: relative;
+    padding: 8px;
+    top: 20px;
+    bottom: 20px;
+    font-size: 18px;
+    height: 120px;
+}
+
+.item-label {
+    position: relative;
+    left: 400px;
+    display: inline;
+}
+
+.textarea-input {
+    position: absolute;
+    height: 150px;
+    width: 288px;
+    box-sizing: border-box;
+    padding: 10px 0 10px 10px;
+    margin: auto auto 17px;
+    border-radius: 3px;
+    border: solid #000000 1px;
+    left: 520px;
+}
+
+#submit-button {
+    position: relative;
+    top: 165px;
+    margin: auto;
+    left: 545px;
+    border-radius: 7px;
+    height: 40px;
+    width: 140px;
+    font-size: 20px;
+}
+
+.notification {
+    position: relative;
+    text-align: center;
+    top: 150px;
+    font-size: 18px;
+    font-family: "等线", serif;
+}
+
+.sub-item-label {
+    position: relative;
+    left: 425px;
+    display: inline;
+    height: 30px;
+}
+
+.sub-item-label2 {
+    position: relative;
+    left: 510px;
+}
+
+.sub-item {
+    display: inline;
+    left: 425px;
+}
+
+.sub-item2 {
+    position: relative;
+    left: 85px;
+    padding-top: 10px;
+}
+
+#day {
+    position: relative;
+    left: 500px;
+    height: 30px;
+    width: 170px;
+    border-radius: 4px;
+    background-color: white;
+}
+
+.hour {
+    position: relative;
+    left: 464px;
+    height: 30px;
+    width: 50px;
+    border-radius: 4px;
+    background-color: white;
+}
+
+.minute {
+    position: relative;
+    left: 475px;
+    height: 30px;
+    width: 50px;
+    border-radius: 4px;
+    background-color: white;
+}
+
+.highlight {
+    background: rgb(230,247,255);
+    border-right: 3px solid rgb(17,129,252);
+}
+
+#info-panel {
+    position: relative;
+    padding: 0 40% 0 40%;
+}
+
+.tiny-label {
+    font-size: 14px;
+    color: rgb(17,129,252);
+}
+
+.wide {
+    padding-top: 20px;
+    padding-bottom: 20px;
+    font-size: 20px;
+}
