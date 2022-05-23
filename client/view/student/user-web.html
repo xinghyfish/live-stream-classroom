@@ -1,0 +1,63 @@
+{% extends base.html %}
+
+<script src="node_modules/vue/dist/vue.runtime.global.js"></script>
+{% block main %}
+<div id="main">
+    <div id="subtitle">
+        课程表
+    </div>
+    <table id="course-table">
+        <tr>
+            <td class="thead">课程</td>
+            <td class="thead">时间</td>
+            <td class="thead">授课老师</td>
+            <td class="thead">状态</td>
+        </tr>
+        {% for course in courses %}
+        <tr>
+            <td>{{ course["name"] }}</td>
+            <td>{{ course["clock"] }}</td>
+            <td>{{ course["teacherName"] }}</td>
+            {% if course["status"] %}
+            <td class="class-off">正在直播</td>
+            {% else %}
+            <td class="class-on">暂未开播</td>
+            {% end %}
+        </tr>
+        {% end %}
+    </table>
+
+    <div id="current-class">
+        <div id="sub-subtitle">当前课程</div>
+        <div id="current-class-info">
+            <div id="current-course-name">
+                {% if current_course %}
+                {{ current_course }}
+                {% else %}
+                当前暂无课程
+                {% end %}
+            </div>
+            <embed src="../static/icons/摄像机、直播、播放.svg">
+            <div id="live-now">老师正在上课</div>
+            <div id="enter-btn-div">
+                {% if current_course %}
+                <button id="enter-btn-enabled" onclick="jump({{ current_course['id'] }}, {{ current_course['teacherName'] }})">进入直播</button>
+                {% else %}
+                <button id="enter-btn-disabled" disabled="disabled">暂无直播</button>
+                {% end %}
+            </div>
+        </div>
+    </div>
+</div>
+{% end %}
+
+<script>
+    const btn = new Vue({
+        el: "#enter-btn-enabled",
+        methods: {
+            jump: function (courseID, teacherName) {
+                window.location.href = "/live?id=<courseID>&teacherName=<teacherName>"
+            }
+        }
+    });
+</script>

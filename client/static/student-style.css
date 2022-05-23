@@ -1,0 +1,141 @@
+* {
+    margin: 0;
+    padding: 0;
+}
+
+body {
+    background-color: white;
+    margin: 0;
+    overflow-x: hidden;
+}
+
+#web-title {
+    position: relative;
+    background-color: rgb(229,229,234);
+    padding-top: 10px;
+    padding-bottom: 10px;
+    text-align: center;
+    font-size: 20px;
+    color: black;
+    height: 50px;
+    width: 100%;
+}
+
+#query-input {
+    position: relative;
+    height: 30px;
+    width: 300px;
+    top: 5px;
+}
+
+#subtitle {
+    position: relative;
+    left: 270px;
+    top: 25px;
+    font-size: 24px;
+}
+
+#course-table {
+    position: relative;
+    top: 50px;
+    left: 270px;
+    border: solid gray;
+    border-width: 1px 0 0 1px;
+    text-align: center;
+}
+
+td {
+    position: relative;
+    font-size: 18px;
+    width: 250px;
+    height: 40px;
+    border: solid lightgray;
+    border-width: 0 1px 1px 0;
+    text-align: center;
+}
+
+.thead {
+    background-color: lightskyblue;
+}
+
+#current-class {
+    position: relative;
+    top: 150px;
+    left: 270px;
+    width: 1000px;
+    height: 250px;
+    border: solid lightgray 2px;
+    text-align: center;
+}
+
+#sub-subtitle {
+    position: relative;
+    top: 15px;
+    left: 25px;
+    font-size: 20px;
+    color: blue;
+    text-align: left;
+}
+
+#current-class-info {
+    position: relative;
+    width: 950px;
+    height: 160px;
+    top: 30px;
+    left: 25px;
+    border: solid lightgrey 2px;
+}
+
+#current-course-name {
+    position: relative;
+    text-align: left;
+    font-size: 22px;
+    left: 100px;
+    top: 45px;
+}
+
+#live-now {
+    position: relative;
+    text-align: left;
+    font-size: 18px;
+    left: 100px;
+    top: 50px;
+}
+
+#enter-btn-div {
+    position: relative;
+    text-align: right;
+    top: 10px;
+    right: 30px;
+}
+
+#enter-btn-enabled {
+    position: relative;
+    bottom: 10px;
+    width: 120px;
+    height: 40px;
+    font-size: 18px;
+    color: orangered;
+    background-color: #FFFFFF;
+    border-radius: 8px;
+    border: solid 2px orangered;
+}
+
+#enter-btn-disabled {
+    position: relative;
+    bottom: 10px;
+    width: 120px;
+    height: 40px;
+    font-size: 18px;
+    color: lightgrey;
+    background-color: #FFFFFF;
+    border-radius: 8px;
+    border: solid 2px lightgrey;
+}
+
+embed {
+    position: absolute;
+    left: 30px;
+    top: 50px;
+    width: 50px;
+}

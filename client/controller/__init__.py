@@ -16,19 +16,19 @@ class IndexHandler(tornado.web.RequestHandler):
 
 class LoginHandler(tornado.web.RequestHandler):
     def post(self):
-        self.username = self.get_argument("account")
-        self.password = self.get_argument("passwd")
+        username = self.get_argument("account")
+        password = self.get_argument("passwd")
         try:
             ret = db.query_data(f"""
                 select * from user
-                where username='{self.username}' and passwd='{self.password}'
-            """)
+                where username='{username}' and passwd='{password}'
+            """)[0]
             if len(ret) == 0:
                 self.render("index.html", err_msg="密码错误，请重新输入")
             else:
-                self.set_cookie("username", self.username)
-                self.set_cookie("passwd", self.password)
-                if type == "学生":
+                self.set_cookie("username", username)
+                self.set_cookie("passwd", password)
+                if ret["type"] == "学生":
                     self.redirect("/student/user-web")
                 else:
                     self.redirect("/teacher/user-web")
@@ -43,7 +43,6 @@ class RegisterHandler(tornado.web.RequestHandler):
     def post(self):
         post_data = self.request.body_arguments
         user = {x: post_data.get(x)[0].decode("utf-8") for x in post_data.keys()}
-        print(user)
         if user["username"] == "":
             self.write("您的用户名为空!")
         elif user["passwd"] == "":
@@ -83,7 +82,7 @@ class TeacherUserWebHandler(tornado.web.RequestHandler):
             from user
             where username = '{username}'
         """)[0]
-        print(bytes(user["avatar"]))
+        # print(bytes(user["avatar"]))
         return self.render("teacher/user-web.html", user=user)
 
 
@@ -117,7 +116,6 @@ class TeacherCourseInfoHandler(tornado.web.RequestHandler):
             """)
             for courseTime in courseTimes:
                 courseInfos[0]["clock"] = courseTime["clock"]
-                print(courseInfos)
                 courses.extend(courseInfos)
 
         return self.render("teacher/course-info.html", courses=courses)
@@ -163,3 +161,44 @@ class TeacherAddCourseHandler(tornado.web.RequestHandler):
             """)
             # update
         return self.redirect("/teacher/course-info")
+
+
+class DrawHandler(tornado.web.RequestHandler):
+    def get(self):
+        return self.render("tools/draw.html")
+
+
+class StudentHandler(tornado.web.RequestHandler):
+    def get(self):
+        username = self.get_cookie("username")
+        user = db.query_data(f"""
+            select username, nickname, avatar, email, school, userID
+            from user
+            where username = '{username}'
+        """)[0]
+        TCs = db.query_data(f"""
+            select teacherName, courseID
+            from SC
+            where studentName = '{username}'
+        """)
+        courses = []
+        current_course = None
+        for TC in TCs:
+            courseID = TC["courseID"]
+            course = db.query_data(f"""
+                select name from course
+                where id = '{courseID}'
+            """)[0]
+            course["id"] = courseID
+            course["teacherName"] = TC["teacherName"]
+            res = db.query_data(f"""
+                select clock, status from TC
+                where teacherName = '{TC["teacherName"]}' and courseID = '{courseID}'
+            """)[0]
+            course["clock"], course["status"] = res["clock"], res["status"]
+            if course["status"]:
+                current_course["name"] = course["name"]
+                current_course["teacherName"] = course["teacherName"]
+                current_course["id"] = courseID
+            courses.append(course)
+        return self.render("student/user-web.html", user=user, courses=courses, current_course=current_course)

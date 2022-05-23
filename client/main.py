@@ -12,8 +12,7 @@ tornado.options.define('port', default=8000, type=int, help="This is the port >f
 
 if __name__ == '__main__':
     # create an app object
-    handlers = \
-    [
+    handlers = [
         (r'/', IndexHandler),
         (r'/log', LoginHandler),
         (r'/hello', HelloHandler),
@@ -23,6 +22,8 @@ if __name__ == '__main__':
         (r'/teacher/about', TeacherAboutHandler),
         (r'/teacher/add-course', TeacherAddCourseHandler),
         (r'/avatar/<username>', AvatarHandler),
+        (r'/draw', DrawHandler),
+        (r'/student/user-web', StudentHandler),
     ]
     template_path = os.path.join(os.path.dirname(__file__), "view")
     static_path = os.path.join(os.path.dirname(__file__), "static")

@@ -1,0 +1,159 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>画板</title>
+    <link href="{{ static_url('draw.css') }}" rel="stylesheet">
+</head>
+<body>
+    <div class="tool">
+        <span class="draw" onclick="draw()">画笔</span>
+        <span class="clear" onclick="xiangpi()">橡皮</span>
+        <span class="empty" onclick="empty()">清除</span>
+        <span class="tianzige" onclick="tianzige()">田字格</span>
+        <span class="hengxian" onclick="hengxian()">横线</span>
+
+        <span class="screen" onclick="screena()">截屏</span>
+    </div>
+    <div class="color">
+        <span class="c1" onclick="changeColor('red')">红</span>
+        <span class="c2" onclick="changeColor('yellow')">黄</span>
+        <span class="c3" onclick="changeColor('#333')">黑</span>
+        <span class="c4" onclick="changeColor('green')">绿</span>
+        <span class="c5" onclick="changeColor('white')">白</span>
+        <span class="c6" onclick="changeColor('purple')">紫</span>
+    </div>
+    <div class="linewidth">
+        <span class="line1" onclick="changeWidth(5)"></span>
+        <span class="line2" onclick="changeWidth(10)"></span>
+        <span class="line3" onclick="changeWidth(20)"></span>
+    </div>
+</body>
+
+<script type="text/javascript">
+    //初始化几个参数，后续可以通过用户点击按钮进行改变。
+    var status = 'draw';//'draw' 'clear'
+    var dotWidth = 50;
+    var color = 'white';
+    var lineWidth = 5;
+    var canvas = {
+        //canvas初始化
+        init () {
+            this.ele = document.createElement('canvas');
+            document.body.appendChild(this.ele);
+            this.ctx = this.ele.getContext('2d');
+            //背景图层
+            this.floor = document.createElement('canvas');
+            this.floor.id = 'bg';
+            document.body.appendChild(this.floor);
+            this.floorCtx = this.floor.getContext('2d');
+            //设定canvas的宽高
+            this.width = this.ele.width = this.floor.width = window.innerWidth;
+            this.height = this.ele.height = this.floor.height = window.innerHeight;
+
+            return this;
+        },
+        get (){
+            return this;
+        },
+        //加载背景图层
+        drawImage (imgPath){
+            var that = this;
+            // that.floorCxt.clearRect(0,0,that.width,that.height);
+            var img = new Image();
+            img.src = imgPath;
+            img.onload = function(){
+                that.floorCtx.clearRect(0,0,that.width,that.height);
+                that.floorCtx.drawImage(img,that.width/2 - 500,that.height/2 - 100);
+            }
+
+        },
+        //事件绑定：鼠标按钮、鼠标移动、鼠标弹起
+        bind(){
+            let ctx = this.ctx;
+            let startDraw = false;//标识是否开始绘制
+            this.ele.onmousedown = function(ev){
+                startDraw = true;
+                var x = ev.clientX,y = ev.clientY;
+                ctx.beginPath();
+            }
+            this.ele.onmousemove = function(ev){
+                if(startDraw){
+                    console.log(status);
+                    var x = ev.clientX,y = ev.clientY;
+                    if(status === 'draw'){
+                        ctx.strokeStyle = color;
+                        ctx.lineWidth = lineWidth;
+                        ctx.lineTo(x,y);
+                        ctx.stroke();
+                    }else if(status === 'clear'){
+                        //清除
+                        ctx.strokeStyle = 'rgba(0,0,0,1)';
+                        ctx.clearRect(x - 40,y - 40,80,80);
+                    }
+                }
+            }
+            this.ele.onmouseup = function(){
+                ctx.closePath();
+                startDraw = false;
+            }
+        }
+    }
+    canvas.init().bind();
+
+    //改变全局状态的颜色
+    function changeColor(c){
+        color = c;
+    }
+    //切换绘画/清除状态
+    function draw(){
+        console.log('abc');
+        status = 'draw';
+    }
+    //切换绘画/清除状态
+    function xiangpi(){
+        console.log('aaa');
+        status = 'clear';
+    }
+    //改变线条宽度
+    function changeWidth(w){
+        lineWidth = w;
+    }
+    //加载背景图片
+    function tianzige(){
+        canvas.get().drawImage('bg.png');
+    }
+    function hengxian(){
+        canvas.get().drawImage('line.png');
+    }
+    //清空画布
+    function empty(){
+        var ins = canvas.get();
+        ins.ctx.clearRect(0,0,ins.width,ins.height);
+    }
+    //保存图片
+    function screena(){
+        //设置保存图片的类型
+        var type = 'jpg';
+        var imgdata = canvas.get().ele.toDataURL(type);
+        //将mime-type改为image/octet-stream,强制让浏览器下载
+        var fixtype = function (type) {
+            type = type.toLocaleLowerCase().replace(/jpg/i, 'jpeg');
+            var r = type.match(/png|jpeg|bmp|gif/)[0];
+            return 'image/' + r;
+        }
+        imgdata = imgdata.replace(fixtype(type), 'image/octet-stream')
+        //将图片保存到本地
+        var saveFile = function (data, filename) {
+            var link = document.createElement('a');
+            link.href = data;
+            link.download = filename;
+            var event = document.createEvent('MouseEvents');
+            event.initMouseEvent('click', true, false, window, 0, 0, 0, 0, 0, false, false, false, false, 0, null);
+            link.dispatchEvent(event);
+        }
+        var filename = new Date().toLocaleDateString() + '.' + type;
+        saveFile(imgdata, filename);
+    }
+</script>
+</html>

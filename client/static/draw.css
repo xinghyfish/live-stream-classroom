@@ -1,0 +1,86 @@
+html,body{
+    margin:0px;
+    padding: 0px;
+    height:100%;
+    width: 100%;
+    overflow: hidden;
+}
+canvas{
+    height:100%;
+    width:100%;
+    position:absolute;
+    left:0px;
+    top:0px;
+    z-index:100;
+    background-color: transparent;
+}
+#bg{
+    background-color: #49e;
+    z-index:10;
+}
+.tool>span{
+    display:inline-block;
+    position:absolute;
+    width:100px;
+    height:30px;
+    border:1px solid #f2f2f2;
+    text-align:center;
+    line-height:30px;
+    color:#f2f2f2;
+    cursor:pointer;
+}
+.draw{left:10px;top:10px;}
+.clear{left:150px;top:10px;}
+.empty{left:300px;top:10px;}
+.tianzige{left:450px;top:10px;}
+.hengxian{left:600px;top:10px;}
+.screen{left:750px;top:10px;}
+.tool{
+    position:absolute;
+    left:0px;
+    top:0px;
+    z-index:99999;
+}
+.color{
+    position:absolute;
+    right:0px;
+    top:0px;
+    width:110px;
+    z-index:9999;
+    height:100px;
+}
+.color>span{
+    display:inline-block;
+    height:20px;
+    margin:2px;
+    width:50px;
+    line-height:20px;
+    text-align:center;
+    float:left;
+    cursor:pointer;
+    font-size:12px;
+}
+.c1{background-color:red;color:white;}
+.c2{background-color:yellow;color:#333;}
+.c3{background-color:#333;color:white;}
+.c4{background-color:green;color:white;}
+.c5{background-color:white;color:#333;}
+.c6{background-color:purple;color:#f2f2f2;}
+.linewidth{
+    position:absolute;
+    top:80px;
+    right:0px;
+    width:110px;
+    height:100px;
+    z-index:09999;
+}
+.linewidth>span{
+    width:100%;
+    display:inline-block;
+    margin-bottom:5px;
+    cursor:pointer;
+    background-color:white;
+}
+.line1{height:5px;}
+.line2{height:10px;}
+.line3{height:20px;}

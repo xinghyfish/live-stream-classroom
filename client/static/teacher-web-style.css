@@ -234,3 +234,10 @@ td {
     padding-bottom: 20px;
     font-size: 20px;
 }
+
+embed {
+    position: relative;
+    width: 24px;
+    top: 6px;
+    left: 50px;
+}
