@@ -41,7 +41,7 @@
             <div id="live-now">老师正在上课</div>
             <div id="enter-btn-div">
                 {% if current_course %}
-                <button id="enter-btn-enabled" onclick="jump({{ current_course['id'] }}, {{ current_course['teacherName'] }})">进入直播</button>
+                <button id="enter-btn-enabled" @click="jump(current_course['name'], current_course['teacherName'])">进入直播</button>
                 {% else %}
                 <button id="enter-btn-disabled" disabled="disabled">暂无直播</button>
                 {% end %}
@@ -55,8 +55,8 @@
     const btn = new Vue({
         el: "#enter-btn-enabled",
         methods: {
-            jump: function (courseID, teacherName) {
-                window.location.href = "/live?id=<courseID>&teacherName=<teacherName>"
+            jump: function (courseName, teacherName) {
+                window.location.href = "/live?teacherName=" + teacherName + "&courseName=" + courseName
             }
         }
     });

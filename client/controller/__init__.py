@@ -11,7 +11,7 @@ class HelloHandler(tornado.web.RequestHandler):
 class IndexHandler(tornado.web.RequestHandler):
     # add get()
     def get(self):
-        self.render("index.html", err_msg="")
+        self.render("login.html", err_msg="")
 
 
 class LoginHandler(tornado.web.RequestHandler):
@@ -24,7 +24,7 @@ class LoginHandler(tornado.web.RequestHandler):
                 where username='{username}' and passwd='{password}'
             """)[0]
             if len(ret) == 0:
-                self.render("index.html", err_msg="密码错误，请重新输入")
+                self.render("login.html", err_msg="密码错误，请重新输入")
             else:
                 self.set_cookie("username", username)
                 self.set_cookie("passwd", password)
@@ -65,10 +65,14 @@ class RegisterHandler(tornado.web.RequestHandler):
             else:
                 for p in user.items():
                     self.set_cookie(p[0], p[1])
-
+                avatar = self.request.files.get("avatar", None)[0]
+                save_to = '../static/avatars/' + user["username"] + '.{}'.format(avatar['filename']).split('.')[1]
+                with open(save_to, 'wb') as f:
+                    f.write(avatar['body'])
                 db.insert_or_update_data(f"""
-                    insert into user(username, passwd, nickname, avatar, email, type, school, userID)
-                    values('{user["username"]}', '{user["passwd"]}', '{user["nickname"]}', '{user["avatar"]}', '{user["email"]}', '{user["type"]}', '{user["school"]}', '{user["userID"]}')
+                    insert into user(username, passwd, nickname, email, type, school, userID)
+                    values('{user["username"]}', '{user["passwd"]}', '{user["nickname"]}', 
+                    '{user["email"]}', '{user["type"]}', '{user["school"]}', '{user["userID"]}') 
                 """)
 
                 self.redirect('/')
@@ -145,7 +149,8 @@ class TeacherAddCourseHandler(tornado.web.RequestHandler):
         if not visited:
             db.insert_or_update_data(f"""
                 insert into course(id, name, credit, class, count, ps)
-                values('{course["id"]}', '{course["name"]}', {course["credit"]}, '{course["class"]}', {course["count"]}, '{course["ps"]}')
+                values('{course["id"]}', '{course["name"]}', {course["credit"]}, '{course["class"]}', 
+                {course["count"]}, '{course["ps"]}')
             """)
         visited = db.query_data(f"""
             select * from TC
@@ -202,3 +207,11 @@ class StudentHandler(tornado.web.RequestHandler):
                 current_course["id"] = courseID
             courses.append(course)
         return self.render("student/user-web.html", user=user, courses=courses, current_course=current_course)
+
+
+class LiveHandler(tornado.web.RequestHandler):
+    def get(self):
+        # 通过查询字符串风格的url获取前端传递的参数
+        teacherName = self.get_argument("teacherName")
+        courseName = self.get_argument("courseName")
+        return self.render("index.html", teacherName=teacherName, courseName=courseName)

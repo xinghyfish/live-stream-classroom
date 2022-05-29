@@ -1,21 +1,439 @@
-<!DOCTYPE html>
-<html lang="en">
+<!doctype html>
+<html>
 <head>
-    <meta charset="UTF-8" content="text/html">
-    <title>登录页</title>
-    <link href="{{static_url('log-style.css')}}" rel="stylesheet"/>
+    <meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
+    <!-- 规定文档的字符编码。 -->
+    <title>{{ teacherName }}的{{ courseName }}直播间</title>
+
+    <!-- Bootstrap4 CSS -->
+   <!--  stylesheet中style是样式的意思,sheet是表格之意,总起来是样式表的意思
+         rel="stylesheet" 描述了当前页面与href所指定文档的关系.即说明的是,href连接的文档是一个新式表 -->
+    <link type="text/css" href="{{ static_url('css/live-style.css') }}" rel="stylesheet"/>
+
 </head>
 <body>
-<div class="web-title">登录</div>
-<div class="wrap"><!--outer border-->
-    <div class="title">账号登录</div>
-    <form action="/log" method="post" id="log-form">
-        <label><input type="text" name="account" class="input" placeholder="请输入您的账号"/></label>
-        <label><input type="password" name="passwd" class="input" placeholder="请输入您的密码"/></label>
-        <b><div id="err-msg">{{ err_msg }}</div></b>
-        <a id="register" href="/register">立即注册</a>
-        <label><input type="submit" id="log-btn" name="submit" value="登 录"></label>
-    </form>
+<div id="video-module">
+    <div id="course-info">
+        <img src="../static/avatars/{{ teacherName }}.jpg"  id="avatar" alt="头像"></img>
+        <div id="teacherName"><b>授课老师</b>: {{ teacherName }}</div>
+        <div id="courseName"><b>授课内容：</b>{{ courseName }}</div>
+    </div>
+    <div id="video-part">
+        <video id="localVideo" autoplay playsinline>
+        </video>
+    </div>
+
+    <div id="tool-part">
+        <div id="microphone" class="item" @click="open = !open">
+            <img v-if="open" src="../static/icons/麦克风.svg" alt="开启麦克风" class="icon">
+            <img v-else src="../static/icons/关闭麦克风.svg" alt="关闭麦克风" class="icon">
+            <div class="caption">
+                <span v-if="open">麦克风打开</span>
+                <span v-else>麦克风关闭</span>
+            </div>
+        </div>
+        <div id="camera" class="item" @click="camera()">
+            <img v-if="open" src="../static/icons/摄像头.svg" alt="开启屏幕" class="icon">
+            <img v-else src="../static/icons/摄像头_关闭.svg" alt="关闭屏幕" class="icon">
+            <div class="caption">
+                <span v-if="open">摄像头打开</span>
+                <span v-else>摄像头关闭</span>
+            </div>
+        </div>
+        <div id="share-screen" class="item" @click="shareScreen()">
+            <img v-if="open" src="../static/icons/开启屏幕.svg" alt="结束共享" class="icon">
+            <img v-else src="../static/icons/关闭屏幕.svg" alt="开始共享" class="icon">
+            <div class="caption">
+                <span v-if="open">结束共享</span>
+                <span v-else>开始共享</span>
+            </div>
+        </div>
+        <div id="member" class="item">
+            <img src="../static/icons/好友.svg" alt="查看成员" class="icon">
+            <div class="caption">查看成员</div>
+        </div>
+        <div id="record-screen" class="item" @click="open = !open">
+            <img v-if="open" src="../static/icons/摄像头.svg" alt="结束录制" class="icon">
+            <img v-else src="../static/icons/摄像头_关闭.svg" alt="开始录制" class="icon">
+            <div class="caption">
+                <span v-if="open">结束录制</span>
+                <span v-else>开始录制</span>
+            </div>
+        </div>
+        <div id="files" class="item">
+            <img src="../static/icons/文件夹.svg" alt="在线文件" class="icon">
+            <div class="caption">
+                <span>在线文件</span>
+            </div>
+        </div>
+        <div id="apps" class="item">
+            <img src="../static/icons/应用.svg" alt="应用" class="icon">
+            <div class="caption">
+                <span>查看应用</span>
+            </div>
+        </div>
+        <div id="setting" class="item">
+            <img src="../static/icons/icon_设置.svg" alt="设置" class="icon">
+            <div class="caption">
+                <span>设置</span>
+            </div>
+        </div>
+    </div>
 </div>
+
+<div id="chat-module">
+    <div id="char-head">
+        <img class="chat-bubble" src="../static/icons/说话气泡.svg" alt="聊天">
+        <span style="position: relative; left: 10px; font-size: 18px; top: 2px;">聊天</span>
+    </div>
+    <div id="chat-body">
+
+    </div>
+    <div id="emoji-part">
+        <img class="emoji" src="../static/icons/表情.svg" alt="表情">
+        <img class="emoji" src="../static/icons/上传文件.svg" alt="上传文件">
+    </div>
+    <div id="input-part">
+        <textarea id="text" placeholder="输入消息…"></textarea>
+    </div>
+    <div id="send-part">
+        <button id="send-button">发送消息</button>
+    </div>
+</div>
+<script src="https://webrtc.github.io/adapter/adapter-latest.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/vue@2.6.14"></script>
+<script>
+    var microphoneVm = new Vue({
+        el: '#microphone',
+        data: {
+            open: false
+        },
+    });
+
+    var cameraVm = new Vue({
+        el: '#camera',
+        data: {
+            open: false
+        },
+        methods: {
+            camera: function () {
+                this.open = !this.open;
+                if (this.open === false)
+                    localPeerConnection.close();
+                // else
+                //     callAction();
+            }
+        }
+    });
+
+    var shareScreenVm = new Vue({
+        el: '#share-screen',
+        data: {
+            open: false
+        },
+        methods: {
+            shareScreen: function () {
+                this.open = !this.open;
+                if (this.open === true) {
+
+                }
+            }
+        }
+    });
+
+    var recordScreenVm = new Vue({
+        el: '#record-screen',
+        data: {
+            open: false
+        }
+    });
+</script>
+<script>
+'use strict';
+
+// Set up media stream constant and parameters.
+
+// In this codelab, you will be streaming video only: "video: true".
+// Audio will not be streamed because it is set to "audio: false" by default.
+const mediaStreamConstraints = {
+  video: true,
+};
+
+// Set up to exchange only video.
+const offerOptions = {
+  offerToReceiveVideo: 1,
+};
+
+// Define initial start time of the call (defined as connection between peers).
+let startTime = null;
+
+// Define peer connections, streams and video elements.
+const localVideo = document.getElementById('localVideo');
+// const remoteVideo = document.getElementById('remoteVideo');
+
+let localStream;
+let remoteStream;
+
+let localPeerConnection;
+let remotePeerConnection;
+
+
+// Define MediaStreams callbacks.
+
+// Sets the MediaStream as the video element src.
+function gotLocalMediaStream(mediaStream) {
+  localVideo.srcObject = mediaStream;
+  localStream = mediaStream;
+  trace('Received local stream.');
+  // callButton.disabled = false;  // Enable call button.
+}
+
+// Handles error by logging a message to the console.
+function handleLocalMediaStreamError(error) {
+  trace(`navigator.getUserMedia error: ${error.toString()}.`);
+}
+
+// Handles remote MediaStream success by adding it as the remoteVideo src.
+function gotRemoteMediaStream(event) {
+  const mediaStream = event.stream;
+  remoteVideo.srcObject = mediaStream;
+  remoteStream = mediaStream;
+  trace('Remote peer connection received remote stream.');
+}
+
+
+// Add behavior for video streams.
+
+// Logs a message with the id and size of a video element.
+function logVideoLoaded(event) {
+  const video = event.target;
+  trace(`${video.id} videoWidth: ${video.videoWidth}px, ` +
+        `videoHeight: ${video.videoHeight}px.`);
+}
+
+// Logs a message with the id and size of a video element.
+// This event is fired when video begins streaming.
+function logResizedVideo(event) {
+  logVideoLoaded(event);
+
+  if (startTime) {
+    const elapsedTime = window.performance.now() - startTime;
+    startTime = null;
+    trace(`Setup time: ${elapsedTime.toFixed(3)}ms.`);
+  }
+}
+
+localVideo.addEventListener('loadedmetadata', logVideoLoaded);
+// remoteVideo.addEventListener('loadedmetadata', logVideoLoaded);
+// remoteVideo.addEventListener('onresize', logResizedVideo);
+
+
+// Define RTC peer connection behavior.
+
+// Connects with new peer candidate.
+function handleConnection(event) {
+  const peerConnection = event.target;
+  const iceCandidate = event.candidate;
+
+  if (iceCandidate) {
+    const newIceCandidate = new RTCIceCandidate(iceCandidate);
+    const otherPeer = getOtherPeer(peerConnection);
+
+    otherPeer.addIceCandidate(newIceCandidate)
+      .then(() => {
+        handleConnectionSuccess(peerConnection);
+      }).catch((error) => {
+        handleConnectionFailure(peerConnection, error);
+      });
+
+    trace(`${getPeerName(peerConnection)} ICE candidate:\n` +
+          `${event.candidate.candidate}.`);
+  }
+}
+
+// Logs that the connection succeeded.
+function handleConnectionSuccess(peerConnection) {
+  trace(`${getPeerName(peerConnection)} addIceCandidate success.`);
+};
+
+// Logs that the connection failed.
+function handleConnectionFailure(peerConnection, error) {
+  trace(`${getPeerName(peerConnection)} failed to add ICE Candidate:\n`+
+        `${error.toString()}.`);
+}
+
+// Logs changes to the connection state.
+function handleConnectionChange(event) {
+  const peerConnection = event.target;
+  console.log('ICE state change event: ', event);
+  trace(`${getPeerName(peerConnection)} ICE state: ` +
+        `${peerConnection.iceConnectionState}.`);
+}
+
+// Logs error when setting session description fails.
+function setSessionDescriptionError(error) {
+  trace(`Failed to create session description: ${error.toString()}.`);
+}
+
+// Logs success when setting session description.
+function setDescriptionSuccess(peerConnection, functionName) {
+  const peerName = getPeerName(peerConnection);
+  trace(`${peerName} ${functionName} complete.`);
+}
+
+// Logs success when localDescription is set.
+function setLocalDescriptionSuccess(peerConnection) {
+  setDescriptionSuccess(peerConnection, 'setLocalDescription');
+}
+
+// Logs success when remoteDescription is set.
+function setRemoteDescriptionSuccess(peerConnection) {
+  setDescriptionSuccess(peerConnection, 'setRemoteDescription');
+}
+
+// Logs offer creation and sets peer connection session descriptions.
+function createdOffer(description) {
+  trace(`Offer from localPeerConnection:\n${description.sdp}`);
+
+  trace('localPeerConnection setLocalDescription start.');
+  localPeerConnection.setLocalDescription(description)
+    .then(() => {
+      setLocalDescriptionSuccess(localPeerConnection);
+    }).catch(setSessionDescriptionError);
+
+  trace('remotePeerConnection setRemoteDescription start.');
+  remotePeerConnection.setRemoteDescription(description)
+    .then(() => {
+      setRemoteDescriptionSuccess(remotePeerConnection);
+    }).catch(setSessionDescriptionError);
+
+  trace('remotePeerConnection createAnswer start.');
+  remotePeerConnection.createAnswer()
+    .then(createdAnswer)
+    .catch(setSessionDescriptionError);
+}
+
+// Logs answer to offer creation and sets peer connection session descriptions.
+function createdAnswer(description) {
+  trace(`Answer from remotePeerConnection:\n${description.sdp}.`);
+
+  trace('remotePeerConnection setLocalDescription start.');
+  remotePeerConnection.setLocalDescription(description)
+    .then(() => {
+      setLocalDescriptionSuccess(remotePeerConnection);
+    }).catch(setSessionDescriptionError);
+
+  trace('localPeerConnection setRemoteDescription start.');
+  localPeerConnection.setRemoteDescription(description)
+    .then(() => {
+      setRemoteDescriptionSuccess(localPeerConnection);
+    }).catch(setSessionDescriptionError);
+}
+
+
+// Define and add behavior to buttons.
+
+// Define action buttons.
+const startButton = document.getElementById('camera');
+// const callButton = document.getElementById('callButton');
+// const hangupButton = document.getElementById('hangupButton');
+
+// Set up initial action buttons status: disable call and hangup.
+// callButton.disabled = true;
+// hangupButton.disabled = true;
+
+
+// Handles start button action: creates local MediaStream.
+function startAction() {
+  navigator.mediaDevices.getUserMedia(mediaStreamConstraints)
+    .then(gotLocalMediaStream).catch(handleLocalMediaStreamError);
+  trace('Requesting local stream.');
+}
+
+// Handles call button action: creates peer connection.
+function callAction() {
+  // callButton.disabled = true;
+  // hangupButton.disabled = false;
+
+  trace('Starting call.');
+  startTime = window.performance.now();
+
+  // Get local media stream tracks.
+  const videoTracks = localStream.getVideoTracks();
+  const audioTracks = localStream.getAudioTracks();
+  if (videoTracks.length > 0) {
+    trace(`Using video device: ${videoTracks[0].label}.`);
+  }
+  if (audioTracks.length > 0) {
+    trace(`Using audio device: ${audioTracks[0].label}.`);
+  }
+
+  const servers = null;  // Allows for RTC server configuration.
+
+  // Create peer connections and add behavior.
+  localPeerConnection = new RTCPeerConnection(servers);
+  trace('Created local peer connection object localPeerConnection.');
+
+  localPeerConnection.addEventListener('icecandidate', handleConnection);
+  localPeerConnection.addEventListener(
+    'iceconnectionstatechange', handleConnectionChange);
+  localPeerConnection = new RTCPeerConnection(servers);
+  // remotePeerConnection = new RTCPeerConnection(servers);
+  // trace('Created remote peer connection object remotePeerConnection.');
+  //
+  // remotePeerConnection.addEventListener('icecandidate', handleConnection);
+  // remotePeerConnection.addEventListener(
+  //   'iceconnectionstatechange', handleConnectionChange);
+  // remotePeerConnection.addEventListener('addstream', gotRemoteMediaStream);
+  //
+  // // Add local stream to connection and create offer to connect.
+  // localPeerConnection.addStream(localStream);
+  // trace('Added local stream to localPeerConnection.');
+  //
+  // trace('localPeerConnection createOffer start.');
+  // localPeerConnection.createOffer(offerOptions)
+  //   .then(createdOffer).catch(setSessionDescriptionError);
+}
+
+// Handles hangup action: ends up call, closes connections and resets peers.
+function hangupAction() {
+  localPeerConnection.close();
+  remotePeerConnection.close();
+  localPeerConnection = null;
+  remotePeerConnection = null;
+  hangupButton.disabled = true;
+  callButton.disabled = false;
+  trace('Ending call.');
+}
+
+// Add click event handlers for buttons.
+startButton.addEventListener('click', startAction);
+// callButton.addEventListener('click', callAction);
+// hangupButton.addEventListener('click', hangupAction);
+
+
+// Define helper functions.
+
+// Gets the "other" peer connection.
+function getOtherPeer(peerConnection) {
+  return (peerConnection === localPeerConnection) ?
+      remotePeerConnection : localPeerConnection;
+}
+
+// Gets the name of a certain peer connection.
+function getPeerName(peerConnection) {
+  return (peerConnection === localPeerConnection) ?
+      'localPeerConnection' : 'remotePeerConnection';
+}
+
+// Logs an action (text) and the time when it happened on the console.
+function trace(text) {
+  text = text.trim();
+  const now = (window.performance.now() / 1000).toFixed(3);
+
+  console.log(now, text);
+}
+
+</script>
 </body>
 </html>

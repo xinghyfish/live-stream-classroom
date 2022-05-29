@@ -1,0 +1,21 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8" content="text/html">
+    <title>登录页</title>
+    <link href="{{static_url('css/log-style.css')}}" rel="stylesheet"/>
+</head>
+<body>
+<div class="web-title">登录</div>
+<div class="wrap"><!--outer border-->
+    <div class="title">账号登录</div>
+    <form action="/log" method="post" id="log-form">
+        <label><input type="text" name="account" class="input" placeholder="请输入您的账号"/></label>
+        <label><input type="password" name="passwd" class="input" placeholder="请输入您的密码"/></label>
+        <b><div id="err-msg">{{ err_msg }}</div></b>
+        <a id="register" href="/register">立即注册</a>
+        <label><input type="submit" id="log-btn" name="submit" value="登 录"></label>
+    </form>
+</div>
+</body>
+</html>

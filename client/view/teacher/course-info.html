@@ -1,6 +1,14 @@
 {% extends base.html %}
 
 {% block info %}
+<script>
+function jump(i) {
+    const teacherName = "James";
+    console.log(i)
+    window.location.href = "/live?teacherName=" + teacherName + "&courseName=" + i['name'];
+}
+</script>
+
 <div class="subtitle">您的课程</div>
 <table id="course-table" cellspacing="0">
     <tr>
@@ -11,14 +19,16 @@
         <td class="head">上课人数</td>
         <td class="head"></td>
     </tr>
-    {% for course in courses %}
+    {% for i in range(len(courses)) %}
         <tr>
-            <td>{{ course["name"] }}</td>
-            <td>{{ course["clock"] }}</td>
-            <td>{{ course["credit"] }}</td>
-            <td>{{ course["class"] }}</td>
-            <td>{{ course["count"] }}</td>
-            <td><button class="start-live">开始直播</button></td>
+            <td>{{ courses[i]["name"] }}</td>
+            <td>{{ courses[i]["clock"] }}</td>
+            <td>{{ courses[i]["credit"] }}</td>
+            <td>{{ courses[i]["class"] }}</td>
+            <td>{{ courses[i]["count"] }}</td>
+            <td>
+                <button class="start-live" onclick="jump({{ courses[i] }})">开始直播</button>
+            </td>
         </tr>
     {% end %}
 </table>
