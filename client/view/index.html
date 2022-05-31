@@ -4,14 +4,58 @@
     <meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
     <!-- 规定文档的字符编码。 -->
     <title>{{ teacherName }}的{{ courseName }}直播间</title>
+<!--    <script src="node_modules/vue/dist/vue.cjs.prod.js"></script>-->
+    <script src="https://cdn.jsdelivr.net/npm/vue@2.6.14"></script>
+    <script>
+    function get_cookie(name) {
+        const strCookie = document.cookie;
+        const arrCookie = strCookie.split("; ");
+        for (let i = 0; i < arrCookie.length; ++i) {
+            let arr = arrCookie[i].split("=");
+            if (arr[0] === name)
+                return arr[1]
+        }
+        return ""
+    }
 
-    <!-- Bootstrap4 CSS -->
-   <!--  stylesheet中style是样式的意思,sheet是表格之意,总起来是样式表的意思
-         rel="stylesheet" 描述了当前页面与href所指定文档的关系.即说明的是,href连接的文档是一个新式表 -->
+    let ws;
+    let historyVm = new Vue({
+        el: '#chat-body',
+        data: {
+            messages: [],
+        },
+    });
+
+    function onLoadWS() {
+        const username = get_cookie("username")
+        ws = new WebSocket("ws://" + window.location.host + "/ws?teacherName=" + '{{ teacherName }}' + "&courseName=" + '{{ courseName }}')
+        ws.onopen = function () {
+            ws.send(username + "**#*");
+        }
+        ws.onmessage = function (e) {
+            historyVm.messages.push(e.data);
+            let his_box = document.getElementById('chat-body');
+            his_box.scrollTop = his_box.scrollHeight;
+        }
+        ws.onclose = function () {
+            alert("close");
+            window.location.href = "/student/user-web";
+        }
+    }
+
+    function sendMsg() {
+        ws.send(document.getElementById('user-input').value);
+        document.getElementById("user-input").value = "";
+    }
+
+    function log_out() {
+        window.location.href = "/student/user-web";
+    }
+</script>
     <link type="text/css" href="{{ static_url('css/live-style.css') }}" rel="stylesheet"/>
 
 </head>
-<body>
+<body onload="onLoadWS();">
 <div id="video-module">
     <div id="course-info">
         <img src="../static/avatars/{{ teacherName }}.jpg"  id="avatar" alt="头像"></img>
@@ -87,30 +131,30 @@
         <span style="position: relative; left: 10px; font-size: 18px; top: 2px;">聊天</span>
     </div>
     <div id="chat-body">
-
+<!--        <span v-for="message in messages"></span>-->
     </div>
     <div id="emoji-part">
         <img class="emoji" src="../static/icons/表情.svg" alt="表情">
         <img class="emoji" src="../static/icons/上传文件.svg" alt="上传文件">
     </div>
     <div id="input-part">
-        <textarea id="text" placeholder="输入消息…"></textarea>
+        <textarea class="text" id="user-input" placeholder="输入消息…"></textarea>
     </div>
     <div id="send-part">
-        <button id="send-button">发送消息</button>
+        <input id="send-button" value="发送消息" type="button" onclick="sendMsg();">
     </div>
 </div>
-<script src="https://webrtc.github.io/adapter/adapter-latest.js"></script>
-<script src="https://cdn.jsdelivr.net/npm/vue@2.6.14"></script>
+<!--<script src="https://webrtc.github.io/adapter/adapter-latest.js"></script>-->
+
 <script>
-    var microphoneVm = new Vue({
+    const microphoneVm = new Vue({
         el: '#microphone',
         data: {
             open: false
         },
     });
 
-    var cameraVm = new Vue({
+    const cameraVm = new Vue({
         el: '#camera',
         data: {
             open: false
@@ -126,7 +170,7 @@
         }
     });
 
-    var shareScreenVm = new Vue({
+    const shareScreenVm = new Vue({
         el: '#share-screen',
         data: {
             open: false
@@ -141,13 +185,14 @@
         }
     });
 
-    var recordScreenVm = new Vue({
+    const recordScreenVm = new Vue({
         el: '#record-screen',
         data: {
             open: false
         }
     });
 </script>
+
 <script>
 'use strict';
 

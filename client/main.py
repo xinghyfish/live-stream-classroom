@@ -1,14 +1,16 @@
-#-*- coding:utf-8 -*-
+# -*- coding:utf-8 -*-
 import os.path
 import tornado.web
 import tornado.ioloop
 import tornado.options
 from tornado.httpserver import HTTPServer
 from controller import *
+from controller.websocket import *
+from controller.student import *
+from controller.teacher import *
 
 # define a global tornado configuration
 tornado.options.define('port', default=8000, type=int, help="This is the port >for application")
-
 
 if __name__ == '__main__':
     # create an app object
@@ -21,10 +23,10 @@ if __name__ == '__main__':
         (r'/teacher/course-info', TeacherCourseInfoHandler),
         (r'/teacher/about', TeacherAboutHandler),
         (r'/teacher/add-course', TeacherAddCourseHandler),
-        (r'/avatar/<username>', AvatarHandler),
         (r'/draw', DrawHandler),
         (r'/student/user-web', StudentHandler),
         (r'/live', LiveHandler),
+        (r'/ws', WS_handler)
     ]
     template_path = os.path.join(os.path.dirname(__file__), "view")
     static_path = os.path.join(os.path.dirname(__file__), "static")

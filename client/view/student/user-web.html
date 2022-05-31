@@ -39,13 +39,13 @@
             </div>
             <embed src="../static/icons/摄像机、直播、播放.svg">
             <div id="live-now">老师正在上课</div>
-            <div id="enter-btn-div">
+            <form id="enter-btn-div" action="/student/user-web" method="POST">
                 {% if current_course %}
-                <button id="enter-btn-enabled" @click="jump(current_course['name'], current_course['teacherName'])">进入直播</button>
+                <input id="enter-btn-enabled" type="submit" value="进入直播">
                 {% else %}
-                <button id="enter-btn-disabled" disabled="disabled">暂无直播</button>
+                <input id="enter-btn-disabled" disabled="disabled" value="暂未直播">
                 {% end %}
-            </div>
+            </form>
         </div>
     </div>
 </div>

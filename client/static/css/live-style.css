@@ -185,7 +185,7 @@ video {
     height: 125px;
 }
 
-#text {
+.text {
     position: relative;
     width: 98%;
     height: 98%;
