@@ -17,7 +17,7 @@ class WS_handler(WebSocketHandler, ABC):
         print("[]", teacherName)
         courseName = self.get_argument("courseName")
         print("[]", courseName)
-        return 'history\\%s\\%s\\%s.txt' % \
+        return 'history/%s/%s/%s.txt' % \
                (teacherName, courseName, self.pools[teacherName][courseName].user_dict[user])
 
     def open(self):
