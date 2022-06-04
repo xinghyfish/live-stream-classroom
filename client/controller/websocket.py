@@ -77,5 +77,3 @@ class ChatHandler(WebSocketHandler, ABC):
             fp.write(send_message)
             fp.close()
         self.pools[teacherName][courseName].user_dict.pop(self)
-
-class 
