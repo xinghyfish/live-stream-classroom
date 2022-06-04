@@ -1,6 +1,7 @@
 import os.path
 import time
 from abc import ABC
+import tornado
 from tornado.websocket import WebSocketHandler
 
 
@@ -77,3 +78,14 @@ class ChatHandler(WebSocketHandler, ABC):
             fp.write(send_message)
             fp.close()
         self.pools[teacherName][courseName].user_dict.pop(self)
+
+
+class SignupHandler(WebSocketHandler, ABC):
+    def open(self):
+        pass
+
+    def on_message(self):
+        pass
+
+    def on_close():
+        pass
