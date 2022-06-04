@@ -9,7 +9,7 @@ class Pool:
     user_dict = dict()
 
 
-class WS_handler(WebSocketHandler, ABC):
+class ChatHandler(WebSocketHandler, ABC):
     pools = dict()
 
     def message_file_path(self, user) -> str:
@@ -77,3 +77,5 @@ class WS_handler(WebSocketHandler, ABC):
             fp.write(send_message)
             fp.close()
         self.pools[teacherName][courseName].user_dict.pop(self)
+
+class 

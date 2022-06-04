@@ -247,7 +247,7 @@
 
     function onLoadWS() {
         const username = get_cookie("username")
-        ws = new WebSocket("ws://" + window.location.host + "/ws?teacherName=" + '{{ teacherName }}' + "&courseName=" + '{{ courseName }}')
+        ws = new WebSocket("ws://" + window.location.host + "/chat?teacherName=" + '{{ teacherName }}' + "&courseName=" + '{{ courseName }}')
         ws.onopen = function () {
             ws.send(username + "**#*");
 			memberListVm.members.push(username);

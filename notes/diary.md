@@ -95,4 +95,13 @@ const app = new Vue({
 在设计成员列表的数据结构时，打算在聊天室部分的`websocket`处理用户连接时将用户的相关信息添加到`vue`组件中，直接从前端过（存储到后端数据库意义不大）。但是又想到了一个问题：刷新网页可能会使前端的数据丢失。
 初步构思了两个方案：1. 重新开一个`websocket`连接，这样会产生数据冗余，而且对维护不利；2. 尝试`vue`是否存在缓存功能，这个方案比较理想，优先尝试。
 
-
+## 开发环境
+### 开发环境的设置
+由于开发时遇到一些小问题，导致pycharm中的项目无法通过内置插件将暂存的文件同步到远程的代码仓库，因此后来进行代码同步时使用vscode。vscode+各类插件可以给用户很好的开发体验，虽然在代码检测、提示上相较于pycharm这样的IDE还有所欠缺，但是vscode使用的体验就是定制化更高，更加有geek的感觉。
+那么问题来了：在vscode上运行项目时，加载配置文件的过程中会出现错误。例如本项目中，tornado需要读取文件夹`config/server.config`来完成初始化配置，但是在vscode上运行`main.py`时显示无法找到该配置文件。经过检索发现，需要在vscode中设置一些内容，如下：
+- 打开`文件->首选项->设置`（英文路径为`File->Preference->Settings`），搜索`Execute in File Dir`，将这个项目打上勾（√），表示在终端执行文件时，是否在文件目录中使用执行，而不是在当前打开的文件夹（原文是When executing a file in the terminal, whether to use execute in the file's directory, instead of the current open folder）。
+- 由于vscode的默认设置，运行python并不切换到文件所在的文件夹下（没有`cd`到`main.py`所在目录，而是直接执行，`os.path`并不包含文件所在文件夹），因此找不到同文件夹下的其他文件。通过上面的配制方法可以修改该默认设置。
+- **参考文章**：
+  - https://www.zhihu.com/question/388688408
+  - https://blog.csdn.net/weixin_38003425/article/details/114895764
+- 简中互联网上的部分博客声称是“因为没有访问C盘的权限，转移到D盘”纯粹是扯淡，追究问题还是要寻根到底，并不只是在表面上解决问题。
