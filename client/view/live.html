@@ -4,59 +4,18 @@
     <meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
     <!-- 规定文档的字符编码。 -->
     <title>{{ teacherName }}的{{ courseName }}直播间</title>
-<!--    <script src="node_modules/vue/dist/vue.cjs.prod.js"></script>-->
-    <script src="https://cdn.jsdelivr.net/npm/vue@2.6.14"></script>
-    <script>
-    function get_cookie(name) {
-        const strCookie = document.cookie;
-        const arrCookie = strCookie.split("; ");
-        for (let i = 0; i < arrCookie.length; ++i) {
-            let arr = arrCookie[i].split("=");
-            if (arr[0] === name)
-                return arr[1]
-        }
-        return ""
-    }
-
-    let ws;
-    let historyVm = new Vue({
-        el: '#chat-body',
-        data: {
-            messages: [],
-        },
-    });
-
-    function onLoadWS() {
-        const username = get_cookie("username")
-        ws = new WebSocket("ws://" + window.location.host + "/ws?teacherName=" + '{{ teacherName }}' + "&courseName=" + '{{ courseName }}')
-        ws.onopen = function () {
-            ws.send(username + "**#*");
-        }
-        ws.onmessage = function (e) {
-            historyVm.messages.push(e.data);
-            let his_box = document.getElementById('chat-body');
-            his_box.scrollTop = his_box.scrollHeight;
-        }
-        ws.onclose = function () {
-            alert("close");
-            window.location.href = "/student/user-web";
-        }
-    }
-
-    function sendMsg() {
-        ws.send(document.getElementById('user-input').value);
-        document.getElementById("user-input").value = "";
-    }
-
-    function log_out() {
-        window.location.href = "/student/user-web";
-    }
-</script>
     <link type="text/css" href="{{ static_url('css/live-style.css') }}" rel="stylesheet"/>
 
 </head>
 <body onload="onLoadWS();">
 <div id="video-module">
+	<div id="member-list" class="pop-div">
+		<p v-for="mem in members">{{ mem.name }}</p>
+	</div>
+
+	<div id="app-list" class="pop-div">
+	</div>
+
     <div id="course-info">
         <img src="../static/avatars/{{ teacherName }}.jpg"  id="avatar" alt="头像"></img>
         <div id="teacherName"><b>授课老师</b>: {{ teacherName }}</div>
@@ -92,7 +51,7 @@
                 <span v-else>开始共享</span>
             </div>
         </div>
-        <div id="member" class="item">
+        <div id="member" class="item" @click="showMemberList()">
             <img src="../static/icons/好友.svg" alt="查看成员" class="icon">
             <div class="caption">查看成员</div>
         </div>
@@ -110,7 +69,7 @@
                 <span>在线文件</span>
             </div>
         </div>
-        <div id="apps" class="item">
+        <div id="apps" class="item" @click="showApps()">
             <img src="../static/icons/应用.svg" alt="应用" class="icon">
             <div class="caption">
                 <span>查看应用</span>
@@ -146,7 +105,72 @@
 </div>
 <!--<script src="https://webrtc.github.io/adapter/adapter-latest.js"></script>-->
 
+<script src="../static/js/vue.js"></script>
 <script>
+    function get_cookie(name) {
+        const strCookie = document.cookie;
+        const arrCookie = strCookie.split("; ");
+        for (let i = 0; i < arrCookie.length; ++i) {
+            let arr = arrCookie[i].split("=");
+            if (arr[0] === name)
+                return arr[1]
+        }
+        return ""
+    }
+
+    let ws;
+
+    function onLoadWS() {
+        const username = get_cookie("username")
+        ws = new WebSocket("ws://" + window.location.host + "/ws?teacherName=" + '{{ teacherName }}' + "&courseName=" + '{{ courseName }}')
+        ws.onopen = function () {
+            ws.send(username + "**#*");
+			memberListVm.members.push({name: username});
+        }
+        ws.onmessage = function (e) {
+            historyVm.messages.push(e.data);
+            let his_box = document.getElementById('chat-body');
+            his_box.scrollTop = his_box.scrollHeight;
+        }
+        ws.onclose = function () {
+			memberListVm.members.forEach(function(item, index, arr) {
+				if (item === username)
+					arr.splice(index, 1);
+			});
+            alert("close");
+            window.location.href = "/student/user-web";
+        }
+    }
+
+    function sendMsg() {
+        ws.send(document.getElementById('user-input').value);
+        document.getElementById("user-input").value = "";
+    }
+
+    function log_out() {
+        window.location.href = "/student/user-web";
+    }
+
+	let historyVm = new Vue({
+        el: '#chat-body',
+        data: {
+            messages: [],
+        },
+    });
+
+	const memberListVm = new Vue({
+		el: '#member-list',
+		data() {
+			return {
+				members: [
+                    { name: "James" },
+                ]
+			}
+		},
+		methods: {
+		}
+    });
+
     const microphoneVm = new Vue({
         el: '#microphone',
         data: {
@@ -191,6 +215,47 @@
             open: false
         }
     });
+
+	const memberVm = new Vue({
+		el: '#member',
+		data: {
+			open: false
+		},
+		methods: {
+			showMemberList: function() {
+				this.open = !this.open;
+				appVm.open = false;
+				this.showOrHide();
+				appVm.showOrHide();
+			},
+
+			showOrHide: function() {
+				const memberList = document.getElementById('member-list');
+				if (this.open) memberList.style.display = "block";
+				else memberList.style.display = "none";
+			}
+		}
+	});
+
+	const appVm = new Vue({
+		el: '#apps',
+		data: {
+			open: false
+		},
+		methods: {
+			showApps: function() {
+				this.open = !this.open;
+				memberVm.open = false;
+				this.showOrHide();
+				memberVm.showOrHide();
+			},
+			showOrHide: function() {
+				const appList = document.getElementById('app-list');
+				if (this.open) appList.style.display = 'block';
+				else appList.style.display = 'none';
+			}
+		}
+	})
 </script>
 
 <script>
