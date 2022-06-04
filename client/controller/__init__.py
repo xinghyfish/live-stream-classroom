@@ -1,7 +1,8 @@
+import sys
+sys.path.append("..")
 from abc import ABC
-from http.client import HTTPResponse
 import tornado.web
-from client.model import db
+from model import db
 
 
 class HelloHandler(tornado.web.RequestHandler, ABC):
@@ -89,4 +90,4 @@ class LiveHandler(tornado.web.RequestHandler, ABC):
         # 通过查询字符串风格的url获取前端传递的参数
         teacherName = self.get_argument("teacherName")
         courseName = self.get_argument("courseName")
-        return self.render("index.html", teacherName=teacherName, courseName=courseName)
+        return self.render("live.html", teacherName=teacherName, courseName=courseName)

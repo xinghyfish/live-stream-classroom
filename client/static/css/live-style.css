@@ -103,6 +103,42 @@ video {
     left: 490px;
 }
 
+#member-list {
+    position: absolute;
+    top: 300px;
+    left: 440px;
+    height: 250px;
+    width: 320px;
+    display: none;
+    background-color: #fefefe;
+}
+
+.member-item {
+    position: relative;
+    width: 320px;
+    height: 40px;
+    border: solid black;
+    border-width: 0 0 2px 0;
+}
+
+.item-username {
+    position: absolute;
+    left: 10px;
+    top: 10px;
+}
+
+.item-btn {
+    position: relative;
+    left: 150px;
+    width: 80px;
+    top: 8px;
+}
+
+.pop-div {
+    border: black 2px solid;
+    z-index: 10;
+}
+
 #record-screen {
     left: 560px;
 }
@@ -113,6 +149,34 @@ video {
 
 #apps {
     left: 700px;
+}
+
+#app-list {
+    position: absolute;
+    top: 400px;
+    left: 650px;
+    height: 150px;
+    width: 180px;
+    background-color: #fefefe;
+    display: none;
+}
+
+.app-item {
+    position: relative;
+    width: 40px;
+    padding: 5px;
+}
+
+.app-icon {
+    position: relative;
+    width: 90%;
+    text-align: center;
+}
+
+.app-name {
+    position: relative;
+    width: 100%;
+    text-align: center;
 }
 
 #setting {

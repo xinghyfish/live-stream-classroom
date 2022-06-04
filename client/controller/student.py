@@ -1,7 +1,7 @@
 from abc import ABC
 from http.client import HTTPResponse
 import tornado.web
-from client.model import db
+from model import db
 from controller.websocket import *
 
 

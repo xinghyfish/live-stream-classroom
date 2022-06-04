@@ -14,10 +14,8 @@ class WS_handler(WebSocketHandler, ABC):
 
     def message_file_path(self, user) -> str:
         teacherName = self.get_argument("teacherName")
-        print("[]", teacherName)
         courseName = self.get_argument("courseName")
-        print("[]", courseName)
-        return 'history/%s/%s/%s.txt' % \
+        return 'history//%s//%s//%s.txt' % \
                (teacherName, courseName, self.pools[teacherName][courseName].user_dict[user])
 
     def open(self):
@@ -78,4 +76,4 @@ class WS_handler(WebSocketHandler, ABC):
             fp = open(filepath, 'a', encoding='utf-8')
             fp.write(send_message)
             fp.close()
-        self[teacherName][courseName].user_dict.pop(self)
+        self.pools[teacherName][courseName].user_dict.pop(self)

@@ -32,7 +32,7 @@ if __name__ == '__main__':
     static_path = os.path.join(os.path.dirname(__file__), "static")
 
     app = tornado.web.Application(handlers=handlers, template_path=template_path, static_path=static_path, debug=True)
-    tornado.options.parse_config_file('./etc/server.conf')
+    tornado.options.parse_config_file("conf/server.conf")
     http_server = HTTPServer(app)
     http_server.bind(tornado.options.options.port)
     http_server.start(1)
