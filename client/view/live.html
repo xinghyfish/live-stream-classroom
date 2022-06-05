@@ -17,7 +17,7 @@
         </div>
 	</div>
 	<div id="app-list" class="pop-div">
-        <div class="app-item" v-for="app in apps" href="app.link">
+        <div class="app-item" v-for="app in apps" @click="app.event">
             <img :src=app.icon :alt=app.name class="app-icon">
             <div class="app-name">[[ app.name ]]</div>
         </div>
@@ -125,8 +125,6 @@
         }
         return ""
     }
-
-    let ws;
 
 	let historyVm = new Vue({
         el: '#chat-body',
@@ -239,41 +237,76 @@
         el: '#app-list',
         data: {
             apps: [
-                {link: '/draw', name: '白板', icon: '../static/icons/白板.svg'},
-                {link: '/', name: '签到', icon: '../static/icons/签到.svg'}
+                {
+                    event: function() {
+                        window.location.href = "/draw"
+                    }, 
+                    name: '白板', 
+                    icon: '../static/icons/白板.svg'
+                },
+                {
+                    event: function() {
+                        if (username !== '{{ teacherName }}')
+                            alert("您的身份不是教师，无法发布签到内容！");
+                        else
+                            signupWS.send("start-signup");
+                    }, 
+                    name: '签到', 
+                    icon: '../static/icons/签到.svg'
+                },
             ]
         }
-    })
+    });
 
     function onLoadWS() {
-        const username = get_cookie("username")
-        ws = new WebSocket("ws://" + window.location.host + "/chat?teacherName=" + '{{ teacherName }}' + "&courseName=" + '{{ courseName }}')
-        ws.onopen = function () {
-            ws.send(username + "**#*");
+        const username = get_cookie("username");
+        let chatWS = new WebSocket("ws://" + window.location.host + "/chat?teacherName=" + '{{ teacherName }}' + "&courseName=" + '{{ courseName }}')
+        chatWS.onopen = function () {
+            chatWS.send(username + "**#*");
 			memberListVm.members.push(username);
         }
-        ws.onmessage = function (e) {
+        chatWS.onmessage = function (e) {
             historyVm.messages.push(e.data);
             let his_box = document.getElementById('chat-body');
             his_box.scrollTop = his_box.scrollHeight;
         }
-        ws.onclose = function () {
+        chatWS.onclose = function () {
 			memberListVm.members.forEach(function(item, index, arr) {
 				if (item === username)
 					arr.splice(index, 1);
 			});
             alert("close");
-            window.location.href = "/student/user-web";
+            if (username !== '{{ teacherName }}')
+                window.location.href = "/student/user-web";
+            else
+                window.location.href = "/teacher/user-web";
+        }
+
+        let signupWS = new WebSocket("ws://" + window.location.host + "/signup?teacherName=" + '{{ teacherName }}' + "&courseName=" + '{{ courseName }}');
+        signupWS.onopen = function () {
+            return;
+        }
+        signup.onmessage = function (e) {
+            var signupWin = confirm("签到提醒");
+            let start_time = new Date();
+            if (signupWin == true)
+                signup.send("confirm-signup " + username + " " + start_time);
+            else 
+                signup.send("refuse-signup " + username);
         }
     }
 
     function sendMsg() {
-        ws.send(document.getElementById('user-input').value);
+        chatWS.send(document.getElementById('user-input').value);
         document.getElementById("user-input").value = "";
     }
 
     function log_out() {
-        window.location.href = "/student/user-web";
+        if (username !== '{{ teacherName }}')
+            window.location.href = "/student/user-web";
+        else
+            window.location.href = "/teacher/user-web";
     }
+
 </script>
 </html>
