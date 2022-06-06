@@ -44,7 +44,6 @@ class StudentHandler(tornado.web.RequestHandler, ABC):
 
     def post(self):
         username = self.get_cookie("username")
-        teacherName = self.current_course["teacher"]
-        courseName = self.current_course["courseName"]
-        if username not in ChatHandler.pools[(teacherName, courseName)].user:
-            return self.redirect("/live?teacherName=%s&courseName=%s" % (teacherName, courseName))
+        teacherName = self.current_course["teacherName"]
+        courseName = self.current_course["name"]
+        return self.redirect("/live?teacherName=%s&courseName=%s" % (teacherName, courseName))

@@ -1,6 +1,5 @@
 {% extends base.html %}
 
-<script src="node_modules/vue/dist/vue.runtime.global.js"></script>
 {% block main %}
 <div id="main">
     <div id="subtitle">
@@ -32,13 +31,13 @@
         <div id="current-class-info">
             <div id="current-course-name">
                 {% if current_course %}
-                {{ current_course }}
+                {{ current_course["name"] }}
+                <div id="live-now">{{ current_course["teacherName"] }}老师正在上课</div>
                 {% else %}
                 当前暂无课程
                 {% end %}
             </div>
             <embed src="../static/icons/摄像机、直播、播放.svg">
-            <div id="live-now">老师正在上课</div>
             <form id="enter-btn-div" action="/student/user-web" method="POST">
                 {% if current_course %}
                 <input id="enter-btn-enabled" type="submit" value="进入直播">
@@ -56,7 +55,7 @@
         el: "#enter-btn-enabled",
         methods: {
             jump: function (courseName, teacherName) {
-                window.location.href = "/live?teacherName=" + teacherName + "&courseName=" + courseName
+                window.location.href = "/live?teacherName=" + teacherName + "&courseName=" + courseName;
             }
         }
     });

@@ -281,3 +281,10 @@ video {
     background-color: dodgerblue;
     outline-color: dodgerblue;
 }
+
+#people-count {
+    position: absolute;
+    top: 15px;
+    left: 650px;
+    font-size: 16px;
+}

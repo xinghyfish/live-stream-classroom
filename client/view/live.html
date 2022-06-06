@@ -17,7 +17,7 @@
         </div>
 	</div>
 	<div id="app-list" class="pop-div">
-        <div class="app-item" v-for="app in apps" @click="app.event">
+        <div class="app-item" v-for="(app, index) in apps" :key="index" @click="getLists(app.event)">
             <img :src=app.icon :alt=app.name class="app-icon">
             <div class="app-name">[[ app.name ]]</div>
         </div>
@@ -25,8 +25,9 @@
 
     <div id="course-info">
         <img src="../static/avatars/{{ teacherName }}.jpg"  id="avatar" alt="头像"></img>
-        <div id="teacherName"><b>授课老师</b>: {{ teacherName }}</div>
+        <div id="teacherName"><b>授课老师：</b>{{ teacherName }}</div>
         <div id="courseName"><b>授课内容：</b>{{ courseName }}</div>
+        <div id="people-count"><b>在线人数：</b>[[ peopleCount ]]</div>
     </div>
     <div id="video-part">
         <video id="localVideo" autoplay playsinline>
@@ -126,6 +127,11 @@
         return ""
     }
 
+    // 声明全局变量
+    const username = get_cookie("username");
+    var chatWS;
+    var signupWS;
+
 	let historyVm = new Vue({
         el: '#chat-body',
         data: {
@@ -212,6 +218,14 @@
 		},
 	});
 
+    const peopleCountVm = new Vue({
+        delimiters: ['[[', ']]'],
+        el: '#people-count',
+        data: {
+            peopleCount: memberListVm.members.length
+        },
+    });
+
 	const appVm = new Vue({
 		el: '#apps',
 		data: {
@@ -237,30 +251,32 @@
         el: '#app-list',
         data: {
             apps: [
-                {
-                    event: function() {
-                        window.location.href = "/draw"
-                    }, 
-                    name: '白板', 
-                    icon: '../static/icons/白板.svg'
-                },
-                {
-                    event: function() {
-                        if (username !== '{{ teacherName }}')
-                            alert("您的身份不是教师，无法发布签到内容！");
-                        else
-                            signupWS.send("start-signup");
-                    }, 
-                    name: '签到', 
-                    icon: '../static/icons/签到.svg'
-                },
+                { event: 'drawEvent', name: '白板', icon: '../static/icons/白板.svg' },
+                { event: 'singupEvent', name: '签到', icon: '../static/icons/签到.svg'},
             ]
+        },
+        methods: {
+            getLists: function(itemMethods) {
+                if (itemMethods == "drawEvent")
+                    this.drawEvent();
+                else 
+                    this.signupEvent();
+            },
+            drawEvent: function() {
+                window.location.href = "/draw";
+            },
+            signupEvent: function() {
+                console.log("YES");
+                if (username !== '{{ teacherName }}')
+                    alert("您的身份不是教师，无法发布签到内容！");
+                else
+                    signupWS.send("start-signup");
+            }
         }
     });
 
     function onLoadWS() {
-        const username = get_cookie("username");
-        let chatWS = new WebSocket("ws://" + window.location.host + "/chat?teacherName=" + '{{ teacherName }}' + "&courseName=" + '{{ courseName }}')
+        chatWS = new WebSocket("ws://" + window.location.host + "/chat?teacherName=" + '{{ teacherName }}' + "&courseName=" + '{{ courseName }}')
         chatWS.onopen = function () {
             chatWS.send(username + "**#*");
 			memberListVm.members.push(username);
@@ -282,17 +298,17 @@
                 window.location.href = "/teacher/user-web";
         }
 
-        let signupWS = new WebSocket("ws://" + window.location.host + "/signup?teacherName=" + '{{ teacherName }}' + "&courseName=" + '{{ courseName }}');
+        signupWS = new WebSocket("ws://" + window.location.host + "/signup?teacherName=" + '{{ teacherName }}' + "&courseName=" + '{{ courseName }}');
         signupWS.onopen = function () {
             return;
         }
-        signup.onmessage = function (e) {
+        signupWS.onmessage = function (e) {
             var signupWin = confirm("签到提醒");
             let start_time = new Date();
             if (signupWin == true)
-                signup.send("confirm-signup " + username + " " + start_time);
+                signupWS.send("confirm-signup " + username + " " + start_time);
             else 
-                signup.send("refuse-signup " + username);
+                signupWS.send("refuse-signup " + username);
         }
     }
 

@@ -1,9 +1,10 @@
 import sys
-from datetime import datetime
 import os.path
+sys.path.append(os.path.pardir)
+from model import db
+from datetime import datetime
 import time
 from abc import ABC
-import tornado
 from tornado.websocket import WebSocketHandler
 
 
@@ -18,9 +19,11 @@ class ChatHandler(WebSocketHandler, ABC):
     def message_file_path(self, user) -> str:
         teacherName = self.get_argument("teacherName")
         courseName = self.get_argument("courseName")
-        return "hello.txt"
-        # return './resources//history//%s//%s//%s.txt' % \
-        #        (teacherName, courseName, self.pools[teacherName][courseName].user_dict[user])
+        filepath = os.path.join(os.getcwd(), "resources/history/%s/%s/" % (teacherName, courseName))
+        filename = self.pools[teacherName][courseName].user_dict[user] + ".txt"
+        if not os.path.exists(filepath):
+            os.makedirs(filepath)
+        return filepath + filename
 
     def open(self):
         """When connect is built, add websocket object to users set"""
@@ -35,6 +38,20 @@ class ChatHandler(WebSocketHandler, ABC):
         self.pools[teacherName][courseName].users.add(self)
         self.pools[teacherName][courseName].user_dict[self] = self.get_cookie("username")
 
+        username = self.get_cookie("username")
+        if teacherName == username:
+            courseID = db.query_data(f"""
+                select id
+                from course
+                where name = '{ courseName }'
+            """)
+            db.insert_or_update_data(f"""
+                update TC
+                set status = 1
+                where courseID = '{ courseID[0]["id"] }'
+            """)
+            
+
     def on_message(self, message):
         teacherName = self.get_argument("teacherName")
         courseName = self.get_argument("courseName")
@@ -44,11 +61,14 @@ class ChatHandler(WebSocketHandler, ABC):
         if message.endswith('**#*'):
             # account information ends with '**#*'
             self.pools[teacherName][courseName].user_dict[self] = message[:-4]
-            # if os.path.exists(filepath):
-            #     fp = open(filepath, 'a', encoding='utf-8')
-            #     history = fp.read()
-            #     fp.close()
-            #     self.write_message(history)
+            if os.path.exists(filepath):
+                fp = open(filepath, 'r', encoding='utf-8')
+                history = fp.read()
+                fp.close()
+                self.write_message(history)
+            else:
+                fp = open(filepath, 'w', encoding='utf-8')
+                fp.close()
             send_message = tm + '【' + self.pools[teacherName][courseName].user_dict[self] + '】已进入直播间！' + '\n'
             for user in self.pools[teacherName][courseName].users:
                 filepath = self.message_file_path(user)
@@ -67,8 +87,11 @@ class ChatHandler(WebSocketHandler, ABC):
     def on_close(self):
         teacherName = self.get_argument("teacherName")
         courseName = self.get_argument("courseName")
+        username = self.get_cookie("username")
+
         self.pools[teacherName][courseName].users.discard(self)
         filepath = self.message_file_path(self)
+        print(os.path.abspath(os.path.pardir))
         action_time = time.asctime(time.localtime(time.time()))[-13:-4]
         send_message = action_time + '【' + self.pools[teacherName][courseName].user_dict[self] + '】已离开直播间'
         fp = open(file=filepath, mode='a', encoding='utf-8')
@@ -82,6 +105,18 @@ class ChatHandler(WebSocketHandler, ABC):
             fp.close()
         self.pools[teacherName][courseName].user_dict.pop(self)
 
+        if teacherName == username:
+            courseID = db.query_data(f"""
+                select id
+                from course
+                where name = '{ courseName }'
+            """)
+            db.insert_or_update_data(f"""
+                update TC
+                set status = 0
+                where courseID = '{ courseID[0]["id"] }'
+            """)
+
 
 class SignupHandler(WebSocketHandler, ABC):
     pools = dict()
@@ -89,16 +124,20 @@ class SignupHandler(WebSocketHandler, ABC):
     def record_file_path(self) -> str:
         teacherName = self.get_argument("teacherName")
         courseName = self.get_argument("courseName")
-        return "hello.txt"
-        # return './resources//signup//%s//%s.txt' % \
-        #        (teacherName, courseName)
+        filepath = os.path.join(os.getcwd(), "resources/signup/%s/" % teacherName)
+        filename = courseName + ".txt"
+        if not os.path.exists(filepath):
+            os.makedirs(filepath)
+        return filepath + filename
 
     def open(self):
         teacherName = self.get_argument("teacherName")
         courseName = self.get_argument("courseName")
+        username = self.get_cookie("username")
         filepath = self.record_file_path()
-        with open(filepath, 'a', encoding='utf-8') as fp:
-            fp.write("%s\n" % datetime.today())
+        if username == teacherName:
+            with open(filepath, 'a', encoding='utf-8') as fp:
+                fp.write(str(datetime.today().date()) + '\n')
 
         if not self.pools.get(teacherName):
             self.pools[teacherName] = dict()
@@ -116,6 +155,7 @@ class SignupHandler(WebSocketHandler, ABC):
         message_arr = message.split(' ')
         header = message_arr[0]
         filepath = self.record_file_path()
+        print(message)
 
         if header == 'start-signup':
             for user in self.pools[teacherName][courseName].users:
@@ -124,11 +164,11 @@ class SignupHandler(WebSocketHandler, ABC):
         else:
             fp = open(filepath, 'a', encoding='utf-8')
             student = message_arr[1]
-            time = message_arr[2]
+            time = message_arr[6]
             if header == 'confirm-signup':
-                fp.write("%s 已签到 %s" % (student, time))
+                fp.write("%s 已签到 %s\n" % (student, time))
             elif header == 'refuse-signup':
-                fp.write("%s 未签到" % student)
+                fp.write("%s 未签到\n" % student)
             else:
                 pass
             fp.close()
