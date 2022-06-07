@@ -1,10 +1,11 @@
 import sys
 import os.path
-sys.path.append(os.path.pardir)
-from model import db
 from datetime import datetime
 import time
 from abc import ABC
+sys.path.append(os.path.pardir)
+
+from model import db
 from tornado.websocket import WebSocketHandler
 
 
@@ -91,7 +92,6 @@ class ChatHandler(WebSocketHandler, ABC):
 
         self.pools[teacherName][courseName].users.discard(self)
         filepath = self.message_file_path(self)
-        print(os.path.abspath(os.path.pardir))
         action_time = time.asctime(time.localtime(time.time()))[-13:-4]
         send_message = action_time + '【' + self.pools[teacherName][courseName].user_dict[self] + '】已离开直播间'
         fp = open(file=filepath, mode='a', encoding='utf-8')
@@ -116,6 +116,8 @@ class ChatHandler(WebSocketHandler, ABC):
                 set status = 0
                 where courseID = '{ courseID[0]["id"] }'
             """)
+            for user in self.pools[teacherName][courseName].users:
+                self.write_message("##*#");
 
 
 class SignupHandler(WebSocketHandler, ABC):
@@ -135,9 +137,6 @@ class SignupHandler(WebSocketHandler, ABC):
         courseName = self.get_argument("courseName")
         username = self.get_cookie("username")
         filepath = self.record_file_path()
-        if username == teacherName:
-            with open(filepath, 'a', encoding='utf-8') as fp:
-                fp.write(str(datetime.today().date()) + '\n')
 
         if not self.pools.get(teacherName):
             self.pools[teacherName] = dict()
@@ -148,6 +147,10 @@ class SignupHandler(WebSocketHandler, ABC):
         self.pools[teacherName][courseName].users.add(self)
         self.pools[teacherName][courseName].user_dict[self] = self.get_cookie("username")
 
+        if username == teacherName:
+            with open(filepath, 'a', encoding='utf-8') as fp:
+                fp.write(str(datetime.today().date()) + '\n')
+
     def on_message(self, message):
         teacherName = self.get_argument("teacherName")
         courseName = self.get_argument("courseName")
@@ -155,7 +158,6 @@ class SignupHandler(WebSocketHandler, ABC):
         message_arr = message.split(' ')
         header = message_arr[0]
         filepath = self.record_file_path()
-        print(message)
 
         if header == 'start-signup':
             for user in self.pools[teacherName][courseName].users:
@@ -175,8 +177,57 @@ class SignupHandler(WebSocketHandler, ABC):
         
     def on_close(self):
         teacherName = self.get_argument("teacherName")
+        courseName = self.get_argument("courseName")
+
         username = self.get_cookie("username")
         if teacherName == username:
             filepath = self.record_file_path()
             with open(filepath, 'a', encoding='utf-8') as fp:
                 fp.write("\n");
+        self.pools[teacherName][courseName].user_dict.pop(self)
+        self.pools[teacherName][courseName].users.discard(self)
+
+
+class MediaWebSocket(WebSocketHandler, ABC):
+    # 存储所有的socket状态
+    pools = dict()
+
+    # 连接，需要通知客户端人数的变化
+    def open(self) -> None:
+        teacherName = self.get_argument("teacherName")
+        courseName = self.get_argument("courseName")
+        
+        if not self.pools.get(teacherName):
+            self.pools[teacherName] = dict()
+        if not self.pools[teacherName].get(courseName):
+            self.pools[teacherName][courseName] = Pool()
+            self.pools[teacherName][courseName].users = set()
+            self.pools[teacherName][courseName].user_dict = dict()
+        self.pools[teacherName][courseName].users.add(self)
+        self.pools[teacherName][courseName].user_dict[self] = self.get_cookie("username")
+
+        size = len(self.pools[teacherName][courseName].users)
+        for user in self.pools[teacherName][courseName].users:
+            user.write_message("count-change#$#" + str(size))
+    
+    def on_message(self, message):
+        teacherName = self.get_argument("teacherName")
+        courseName = self.get_argument("courseName")
+
+        message_arr = message.split()
+        if message_arr[0] == "get-member-list":
+            memberList = list(set(self.pools[teacherName][courseName].user_dict.values()))
+            self.write_message("member-list#$#" + str(memberList))
+        else:
+            pass
+            
+
+    def on_close(self) -> None:
+        teacherName = self.get_argument("teacherName")
+        courseName = self.get_argument("courseName")
+
+        self.pools[teacherName][courseName].user_dict.pop(self)
+        self.pools[teacherName][courseName].users.discard(self)
+        for user in self.pools[teacherName][courseName].users:
+            size = len(self.pools[teacherName][courseName].users)
+            user.write_message("count-change#$#" + str(size))

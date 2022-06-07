@@ -28,6 +28,7 @@ if __name__ == '__main__':
         (r'/live', LiveHandler),
         (r'/chat', ChatHandler),
         (r'/signup', SignupHandler),
+        (r'/media', MediaWebSocket),
     ]
     template_path = os.path.join(os.path.dirname(__file__), "view")
     static_path = os.path.join(os.path.dirname(__file__), "static")

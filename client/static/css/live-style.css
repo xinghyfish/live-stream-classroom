@@ -96,17 +96,17 @@ video {
 }
 
 #share-screen {
-    left: 420px;
+    left: 320px;
 }
 
 #member {
-    left: 490px;
+    left: 390px;
 }
 
 #member-list {
     position: absolute;
     top: 300px;
-    left: 440px;
+    left: 400px;
     height: 250px;
     width: 320px;
     display: none;
@@ -140,21 +140,21 @@ video {
 }
 
 #record-screen {
-    left: 560px;
+    left: 460px;
 }
 
 #files {
-    left: 630px;
+    left: 530px;
 }
 
 #apps {
-    left: 700px;
+    left: 600px;
 }
 
 #app-list {
     position: absolute;
     top: 400px;
-    left: 650px;
+    left: 600px;
     height: 150px;
     width: 180px;
     background-color: #fefefe;
@@ -180,7 +180,18 @@ video {
 }
 
 #setting {
-    left: 770px;
+    left: 660px;
+}
+
+#exit-btn {
+    position: relative;
+    left: 730px;
+    top: 12px;
+    height: 35px;
+    width: 100px;
+    background-color: rgba(255, 97, 11, 100%);
+    border-radius: 7px;
+    color: white;
 }
 
 .icon {

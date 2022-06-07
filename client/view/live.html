@@ -89,6 +89,9 @@
                 <span>设置</span>
             </div>
         </div>
+        <div id="exit">
+            <button id="exit-btn" onclick="exit()">退出直播</button>
+        </div>
     </div>
 </div>
 
@@ -129,8 +132,7 @@
 
     // 声明全局变量
     const username = get_cookie("username");
-    var chatWS;
-    var signupWS;
+    var chatWS, signupWS, mediaWS;
 
 	let historyVm = new Vue({
         el: '#chat-body',
@@ -204,10 +206,11 @@
 		},
 		methods: {
 			showMemberList: function() {
-				this.open = !this.open;
-				appVm.open = false;
-				this.showOrHide();
-				appVm.showOrHide();
+				mediaWS.send("get-member-list");
+                this.open = !this.open;
+                appVm.open = false;
+                this.showOrHide();
+                appVm.showOrHide();
 			},
 
 			showOrHide: function() {
@@ -222,7 +225,7 @@
         delimiters: ['[[', ']]'],
         el: '#people-count',
         data: {
-            peopleCount: memberListVm.members.length
+            peopleCount: 0
         },
     });
 
@@ -275,29 +278,29 @@
         }
     });
 
-    function onLoadWS() {
+    function initChatWS() {
         chatWS = new WebSocket("ws://" + window.location.host + "/chat?teacherName=" + '{{ teacherName }}' + "&courseName=" + '{{ courseName }}')
         chatWS.onopen = function () {
             chatWS.send(username + "**#*");
-			memberListVm.members.push(username);
         }
         chatWS.onmessage = function (e) {
-            historyVm.messages.push(e.data);
-            let his_box = document.getElementById('chat-body');
-            his_box.scrollTop = his_box.scrollHeight;
+            if (e.data == "##*#") {
+                chatWS.close()
+            } else {
+                historyVm.messages.push(e.data);
+                let his_box = document.getElementById('chat-body');
+                his_box.scrollTop = his_box.scrollHeight;
+            }
         }
         chatWS.onclose = function () {
-			memberListVm.members.forEach(function(item, index, arr) {
-				if (item === username)
-					arr.splice(index, 1);
-			});
-            alert("close");
             if (username !== '{{ teacherName }}')
                 window.location.href = "/student/user-web";
             else
                 window.location.href = "/teacher/user-web";
         }
+    }
 
+    function initSignupWS() {
         signupWS = new WebSocket("ws://" + window.location.host + "/signup?teacherName=" + '{{ teacherName }}' + "&courseName=" + '{{ courseName }}');
         signupWS.onopen = function () {
             return;
@@ -312,16 +315,41 @@
         }
     }
 
+    function initMediaWS() {
+        mediaWS = new WebSocket("ws://" + window.location.host + "/media?teacherName=" + '{{ teacherName }}' + "&courseName=" + '{{ courseName }}');
+        mediaWS.onopen = function() {
+            return; 
+        }
+        mediaWS.onmessage = function(e) {
+            message_arr = e.data.split("#$#")
+            console.log(message_arr)
+            if (message_arr[0] == "count-change") {
+                peopleCountVm.peopleCount = message_arr[1];
+            } else if (message_arr[0] == "member-list") {
+                let size = message_arr[1].length;
+                console.log(message_arr[1].substr(2, size - 4).split(", "));
+                memberListVm.members = message_arr[1].substr(2, size - 4).split("', '");
+            } else {
+                pass;
+            }
+        }
+    }
+
+    function onLoadWS() {
+        initChatWS();
+        initSignupWS();
+        initMediaWS();    
+    }
+
     function sendMsg() {
         chatWS.send(document.getElementById('user-input').value);
         document.getElementById("user-input").value = "";
     }
 
-    function log_out() {
-        if (username !== '{{ teacherName }}')
-            window.location.href = "/student/user-web";
-        else
-            window.location.href = "/teacher/user-web";
+    function exit() {
+        chatWS.close();
+        signupWS.close();
+        mediaWS.close();
     }
 
 </script>
