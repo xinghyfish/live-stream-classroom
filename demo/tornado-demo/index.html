@@ -27,6 +27,7 @@
 </body>
 
 <script type="text/javascript" src="http://apps.bding.com/libs/jquery/1.6.4/jquery.min.js"></script>
+
 <script>
     var websocket;
     var yourVideo = document.getElementById("yours");
@@ -51,18 +52,18 @@
     // 检测是否有媒体流
     function hasUserMedia() {
         navigator.getUserMedia = navigator.getUserMedia ||
-                                    navigator.msGetUserMedia ||
-                                    navigator.webktiGetUserMedia ||
-                                    navigator.mozGetUserMedia;
+                                 navigator.msGetUserMedia ||
+                                 navigator.webktiGetUserMedia ||
+                                 navigator.mozGetUserMedia;
         return !!navigator.getUserMedia;
     }
     
     // 检测是否有点对点连接
     function hasRTCPeerConnection() {
         window.RTCPeerConnection = window.RTCPeerConnection ||
-                                    window.msRTCPeerConnection ||
-                                    window.webkirRTCPeerConnection ||
-                                    window.mozRTCPeerConnection;
+                                   window.msRTCPeerConnection ||
+                                   window.webkirRTCPeerConnection ||
+                                   window.mozRTCPeerConnection;
         return !!window.RTCPeerConnection;
     }
     
@@ -160,7 +161,7 @@
     
     function createSocket() {
         var user = Math.round(Math.random() * 1000) + "";
-        websocket = new WebSocket("ws://127.0.0.1:8080/ws" + user);
+        websocket = new WebSocket("ws://127.0.0.1:8080/msgServer/" + user);
         eventBind();
     }
     

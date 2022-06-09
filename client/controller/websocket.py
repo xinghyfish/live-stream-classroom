@@ -188,14 +188,20 @@ class SignupHandler(WebSocketHandler, ABC):
         self.pools[teacherName][courseName].users.discard(self)
 
 
+class SessionPool(Pool):
+    username2session = dict()
+    
+
 class MediaWebSocket(WebSocketHandler, ABC):
     # 存储所有的socket状态
     pools = dict()
+    username = ""
 
     # 连接，需要通知客户端人数的变化
     def open(self) -> None:
         teacherName = self.get_argument("teacherName")
         courseName = self.get_argument("courseName")
+        self.username = self.get_argument("username")
         
         if not self.pools.get(teacherName):
             self.pools[teacherName] = dict()
@@ -214,12 +220,15 @@ class MediaWebSocket(WebSocketHandler, ABC):
         teacherName = self.get_argument("teacherName")
         courseName = self.get_argument("courseName")
 
-        message_arr = message.split()
+        message_arr = message.split("#$#")
         if message_arr[0] == "get-member-list":
             memberList = list(set(self.pools[teacherName][courseName].user_dict.values()))
             self.write_message("member-list#$#" + str(memberList))
         else:
-            pass
+            if self.username not in self.pools[teacherName][courseName].user_dict.keys():
+                print("username error!")
+            else:
+                self.pools[teacherName][courseName].user_dict[self.username].write_message(message)            
             
 
     def on_close(self) -> None:

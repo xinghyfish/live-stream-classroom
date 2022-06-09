@@ -177,7 +177,13 @@ ws.send('message');
 初步考虑到以上的逻辑，基本能够应对大多数情景了。由于没有找到比较好合并多个`websocket`的方案，因此只能创建多个`websocket`对象，后期可能会通过`json`等封装交互文档信息，通过规定双方通信的格式来实现对不同类型消息的处理。暂时先多创建几个类来分别处理吧。
 
 ### 2.3 实践
-（挖坑） 
+- 参考文章：
+  - https://blog.csdn.net/LT11hka/article/details/109163655#commentBox
+  - https://juejin.cn/post/7026555813384683533
+  - https://cloud.tencent.com/developer/article/1075384
+  - https://cloud.tencent.com/developer/article/1615486
+  - https://juejin.cn/post/6844903811409149965#heading-5（白板）
+  - https://juejin.cn/post/6887147825113595911#heading-4
 
 
 # 踩坑记录

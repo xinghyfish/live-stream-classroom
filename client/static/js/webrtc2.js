@@ -130,7 +130,7 @@ function eventBind() {
 
 function createSocket() {
     var user = Math.round(Math.random() * 1000) + "";
-    websocket = new WebSocket("ws://127.0.0.1:8080/msgServer/" + user);
+    websocket = mediaWS;
     eventBind();
 }
 
