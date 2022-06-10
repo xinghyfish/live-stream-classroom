@@ -7,7 +7,7 @@
     <link type="text/css" href="{{ static_url('css/live-style.css') }}" rel="stylesheet"/>
 
 </head>
-<body onload="onLoadWS()">
+<body onload="onLoad()">
 <div id="video-module">
 	<div id="member-list" class="pop-div">
         <div class="member-item" v-for="member in members">
@@ -30,8 +30,8 @@
         <div id="people-count"><b>在线人数：</b>[[ peopleCount ]]</div>
     </div>
     <div id="video-part">
-        <video id="yours" autoplay playsinline>
-        </video>
+        <video id="localClient" autoplay playsinline></video>
+        <video id="remoteClient" autoplay playsinline>S</video>
     </div>
 
     <div id="tool-part">
@@ -132,13 +132,7 @@
 
     // 声明全局变量
     const username = get_cookie("username");
-    var ws, signupWS, mediaWS;
-    var yourVideo = document.getElementById("yours");
-    var theirVideo = document.getElementById("their");
-    constraints = {
-        video: false,
-        audio: true,
-    };
+    var ws;
 
 	let historyVm = new Vue({
         el: '#chat-body',
@@ -176,11 +170,12 @@
             camera: function () {
                 this.open = !this.open;
                 if (this.open === false) {
-                    constraints.video = false;
+                    userMediaConstraints.video = false;
                 } else {
-                    constraints.video = true;
+                    userMediaConstraints.video = true;
                 }
-                initStream();
+                loadUserStream();
+                startWebRTC();
             }
         }
     });
@@ -194,8 +189,12 @@
             shareScreen: function () {
                 this.open = !this.open;
                 if (this.open === true) {
-
+                    displayMediaConstraints.video = true;
+                } else {
+                    displayMediaConstraints.video = false;
                 }
+                loadDisplayStream();
+                startWebRTC()
             }
         }
     });
@@ -301,7 +300,102 @@
         }
     });
 
-    function initWS() {
+    let configuration = {}; // { iceServers: [{ urls: 'stun:stun.l.google.com:19302' }] }
+    let startButton = document.getElementById("startButton");
+    let localClient = document.getElementById("localClient");
+    let remoteClient = document.getElementById("remoteClient");
+
+    // RTC点对点配置
+    let localConnection = new RTCPeerConnection(configuration);
+    let remoteConnection = new RTCPeerConnection(configuration);
+
+    let userMediaConstraints = {
+        audio: true,
+        video: false,
+    };
+
+    let displayMediaConstraints = {
+        audio: true,
+        video: false,
+    }
+
+    function loadUserStream() {
+        navigator.mediaDevices.getUserMedia(
+            userMediaConstraints
+        ).then((stream) => {
+            localClient.srcObject = stream;
+            stream.getTracks().forEach((track) => {
+                localConnection.addTrack(track, stream);
+            })
+        }).catch((error) => {
+            console.log(error);
+        });
+    }
+
+    function loadDisplayStream() {
+        navigator.mediaDevices.getDisplayMedia(
+            displayMediaConstraints
+        ).then((stream) => {
+            localClient.srcObject = stream;
+            stream.getTracks().forEach((track) => {
+                localConnection.addTrack(track, stream);
+            })
+        }).catch((error) => {
+            console.log(error);
+        });
+    }
+
+    function startWebRTC() {
+        console.log("start webRTC");
+        localConnection.createOffer().then((offer) => {
+            localConnection.setLocalDescription(offer);
+            ws.send(JSON.stringify({
+                type: "webrtc",
+                key: "offer",
+                data: offer
+            }));
+        }).catch((error) => {
+            console.log("create offer error: " + error);
+        });
+    }
+
+    localConnection.oncandidate = (event) => {
+        console.log("oncandidate");
+        ws.send(JSON.stringify({
+            type: "webrtc",
+            key: "candidate",
+            data: event.candidate
+        }));
+    }
+
+    remoteConnection.addEventListener('addStream', (event) => {
+        console.log("FUCK!");
+        remoteClient.srcObject = event.streams[0];
+    });
+
+    function receivedCandidate(data) {
+        remoteConnection.addIceCandidate(new RTCIceCandidate(data));
+    }
+
+    function receivedOffer(data) {
+        remoteConnection.setRemoteDescription(data);
+        remoteConnection.createAnswer().then((answer) => {
+            remoteConnection.setLocalDescription(answer);
+            ws.send(JSON.stringify({
+                type: "webrtc",
+                key: "answer",
+                data: data
+            }));
+        }).catch((error) => {
+            console.log("receivedOffer createAnswer error: " + error);
+        });
+    }
+
+    function receivedAnswer(data) {
+        localConnection.setRemoteDescription(data);
+    }
+
+    function onLoad() {
         ws = new WebSocket("ws://" + window.location.host + "/ws?teacherName=" + '{{ teacherName }}' + "&courseName=" + '{{ courseName }}')
         ws.onopen = function () {
             ws.send(JSON.stringify({ type: "open-connection", account: username }));
@@ -309,7 +403,7 @@
 
         ws.onmessage = function (e) {
             let message = JSON.parse(e.data);
-            console.log("***" + message);
+            console.log(message);
             if (!message)
                 console.log("websocket-message ERROR!");
 
@@ -339,6 +433,20 @@
                 peopleCountVm.peopleCount = message.count;
             } else if (message.type === "answer-member-list") {
                 memberListVm.members = message.memberlist
+            } else if (message.type === "webrtc") {
+                switch (message.key) {
+                    case "offer":
+                        console.log("offer");
+                        return receivedOffer(message.data);
+                    case "answer":
+                        console.log("answer");
+                        return receivedAnswer(message.data);
+                    case "candidate":
+                        console.log("candidate");
+                        return receivedCandidate(message.data);
+                    default:
+                        console.log(message.data);
+                }
             }
         }
 
@@ -348,11 +456,6 @@
             else
                 window.location.href = "/teacher/user-web";
         }
-    }
-
-
-    function onLoadWS() {
-        initWS();    
     }
 
     function sendMsg() {
@@ -365,97 +468,6 @@
 
     function exit() {
         ws.close();
-        signupWS.close();
-        mediaWS.close();
     }
-
-    var websocket;
-    var Connection;
-
-    // 检测是否有媒体流
-    function hasUserMedia() {
-        navigator.getUserMedia = navigator.getUserMedia ||
-                                navigator.msGetUserMedia ||
-                                navigator.webktiGetUserMedia ||
-                                navigator.mozGetUserMedia;
-        return !!navigator.getUserMedia;
-    }
-
-    // 检测是否有点对点连接
-    function hasRTCPeerConnection() {
-        window.RTCPeerConnection = window.RTCPeerConnection ||
-                                window.msRTCPeerConnection ||
-                                window.webkirRTCPeerConnection ||
-                                window.mozRTCPeerConnection;
-        return !!window.RTCPeerConnection;
-    }
-
-    // 初始化本地流，并将流添加到RTCPeerConnection
-    function initStream() {
-        navigator.getUserMedia(
-        constraints,
-        stream => {
-            yourVideo.srcObject = stream;
-            window.stream = stream;
-            Connection.addStream(stream);
-        },
-        err => {
-            console.log(err);
-        })
-    }
-
-    // 发送offer和answer的函数，发送本地session描述
-    function createOffer() {
-        Connection.createOffer().then((offer) => {
-            Connection.setLocalDescription(offer);
-            websocket.send("p2p" + JSON.stringify({
-                "userID": userID,
-                "event": "offer",
-                "data": {
-                    "sdp": offer
-                }
-            }));
-        })
-    }
-
-    function startPeerConnection() {
-        var config = {
-            'iceServers': [
-                { 'url': 'stun:stun.l.google.com:19302' }
-            ]
-        };
-        config = {
-            'iceServers': [
-                { urls: 'stun:stun.l.google.com:19302' },
-                { urls: 'stun:global.stun.twilio.com:34782?transport=udp' }
-            ],
-        };
-        Connection = new RTCPeerConnection(config);
-        Connection.onicecandidate = (e) => {
-            console.log('onicecandidate');
-            if (e.candidate) {
-                websocket.send(JSON.stringify({
-                    "userID": userID,
-                    "event": "_ice_candidate",
-                    "data": {
-                        "candidate": e.candidate
-                    }
-                }))
-            }
-        }
-        Connection.onaddstream = (e) => {
-            console.log('onaddstream');
-            theirVideo.srcObject = e.stream;
-        }
-    }
-
-    function createSocket() {
-        var user = Math.round(Math.random() * 1000) + "";
-        websocket = mediaWS;
-    }
-
-    createSocket()
-    startPeerConnection();
-    initStream();
 </script>
 </html>

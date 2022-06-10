@@ -66,9 +66,18 @@ body {
     border-bottom: #666666 solid 1px;
 }
 
-video {
+#localClient {
+    position: relative;
     height: 50%;
     width: 50%;
+    color: #64b2ed;
+}
+
+#remoteClient {
+    position: relative;
+    height: 50%;
+    width: 50%;
+    color: #64b2ed;
 }
 
 #tool-part {

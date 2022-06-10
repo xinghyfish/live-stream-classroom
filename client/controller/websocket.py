@@ -127,6 +127,16 @@ class WSHandler(WebSocketHandler, ABC):
                 "type": "answer-member-list",
                 "memberlist": memberList
             }))
+        elif jsonMessage["type"] == "webrtc":
+            for user in self.pools[teacherName][courseName].users:
+                if user != self:
+                    user.write_message(json.dumps({
+                        "type": jsonMessage["type"],
+                        "key": jsonMessage["key"],
+                        "data": jsonMessage["data"]
+                    }));
+        else:
+            print("Invalid TYPE!")
         
 
 
