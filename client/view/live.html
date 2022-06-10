@@ -132,7 +132,7 @@
 
     // 声明全局变量
     const username = get_cookie("username");
-    var chatWS, signupWS, mediaWS;
+    var ws, signupWS, mediaWS;
     var yourVideo = document.getElementById("yours");
     var theirVideo = document.getElementById("their");
     constraints = {
@@ -227,7 +227,9 @@
 		},
 		methods: {
 			showMemberList: function() {
-				mediaWS.send("get-member-list");
+				ws.send(JSON.stringify({
+                    type: "offer-member-list"
+                }));
                 this.open = !this.open;
                 appVm.open = false;
                 this.showOrHide();
@@ -294,26 +296,53 @@
                 if (username !== '{{ teacherName }}')
                     alert("您的身份不是教师，无法发布签到内容！");
                 else
-                    signupWS.send("start-signup");
+                    ws.send(JSON.stringify({ type: "offer-signup" }));
             }
         }
     });
 
-    function initChatWS() {
-        chatWS = new WebSocket("ws://" + window.location.host + "/chat?teacherName=" + '{{ teacherName }}' + "&courseName=" + '{{ courseName }}')
-        chatWS.onopen = function () {
-            chatWS.send(username + "**#*");
+    function initWS() {
+        ws = new WebSocket("ws://" + window.location.host + "/ws?teacherName=" + '{{ teacherName }}' + "&courseName=" + '{{ courseName }}')
+        ws.onopen = function () {
+            ws.send(JSON.stringify({ type: "open-connection", account: username }));
         }
-        chatWS.onmessage = function (e) {
-            if (e.data == "##*#") {
-                chatWS.close()
-            } else {
-                historyVm.messages.push(e.data);
+
+        ws.onmessage = function (e) {
+            let message = JSON.parse(e.data);
+            console.log("***" + message);
+            if (!message)
+                console.log("websocket-message ERROR!");
+
+            if (message.type === "close-connection") {
+                ws.close();
+            } else if (message.type === "user-message") {
+                historyVm.messages.push(message.message);
                 let his_box = document.getElementById('chat-body');
                 his_box.scrollTop = his_box.scrollHeight;
+            } else if (message.type === "answer-signup") {
+                let info = {
+                    type: "answer-signup",
+                    status: null,
+                    account: username,
+                    start_time: null
+                }
+                var signupWin = confirm("签到提醒");
+                if (signupWin == true) {
+                    info.start_time = new Date();
+                    info.status = "confirm";
+                    ws.send(info);
+                } else {
+                    info.status = "refuse";
+                    ws.send(info);
+                }
+            } else if (message.type === "count-change") {
+                peopleCountVm.peopleCount = message.count;
+            } else if (message.type === "answer-member-list") {
+                memberListVm.members = message.memberlist
             }
         }
-        chatWS.onclose = function () {
+
+        ws.onclose = function () {
             if (username !== '{{ teacherName }}')
                 window.location.href = "/student/user-web";
             else
@@ -321,80 +350,21 @@
         }
     }
 
-    function initSignupWS() {
-        signupWS = new WebSocket("ws://" + window.location.host + "/signup?teacherName=" + '{{ teacherName }}' + "&courseName=" + '{{ courseName }}');
-        signupWS.onopen = function () {
-            return;
-        }
-        signupWS.onmessage = function (e) {
-            var signupWin = confirm("签到提醒");
-            let start_time = new Date();
-            if (signupWin == true)
-                signupWS.send("confirm-signup " + username + " " + start_time);
-            else 
-                signupWS.send("refuse-signup " + username);
-        }
-    }
-
-    function initMediaWS() {
-        mediaWS = new WebSocket("ws://" + window.location.host + "/media?teacherName=" + '{{ teacherName }}' + "&courseName=" + '{{ courseName }}' + "&username=" + '{{ username }}');
-        mediaWS.onopen = function() {
-            return; 
-        }
-        mediaWS.onmessage = function(e) {
-            message_arr = e.data.split("#$#")
-            console.log(message_arr)
-            if (message_arr[0] == "count-change") {
-                peopleCountVm.peopleCount = message_arr[1];
-            } else if (message_arr[0] == "member-list") {
-                let size = message_arr[1].length;
-                console.log(message_arr[1].substr(2, size - 4).split(", "));
-                memberListVm.members = message_arr[1].substr(2, size - 4).split("', '");
-            } else if (message_arr[0] == "offer") {
-                if (e.data === "new user") {
-                    location.reload();
-                } else {
-                    var json = JSON.parse(e.data);
-                    console.log(json);
-                    if (json.userID !== userID) {
-                        if (json.event === "_ice_candidate" && json.data.candidate) {
-                            Connection.addIceCandidate(new RTCIceCandidate(json.data.candidate));
-                        } else if (json.event == "offer") {
-                            Connection.setRemoteDescription(json.data.sdp);
-                            Connection.createAnswer().then(answer => {
-                                Connection.setLocalDescription(answer);
-                                console.log(stream);
-                                websocket.send(JSON.stringify({
-                                    "userID": userID,
-                                    "event": "answer",
-                                    "data": {
-                                        "sdp": answer
-                                    }
-                                }));
-                            })
-                        } else if (json.event == "answer") {
-                            Connection.setRemoteDescription(json.data.sdp);
-                            console.log(window.stream);
-                        }
-                    }
-                }
-            }
-        }
-    }
 
     function onLoadWS() {
-        initChatWS();
-        initSignupWS();
-        initMediaWS();    
+        initWS();    
     }
 
     function sendMsg() {
-        chatWS.send(document.getElementById('user-input').value);
+        ws.send(JSON.stringify({
+            type: "user-message",
+            message: document.getElementById('user-input').value
+        }));
         document.getElementById("user-input").value = "";
     }
 
     function exit() {
-        chatWS.close();
+        ws.close();
         signupWS.close();
         mediaWS.close();
     }

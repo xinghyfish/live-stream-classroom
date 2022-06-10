@@ -185,6 +185,50 @@ ws.send('message');
   - https://juejin.cn/post/6844903811409149965#heading-5（白板）
   - https://juejin.cn/post/6887147825113595911#heading-4
 
+第一篇参考文章差不多就是我们期望构建的通信模型。以此为例，我们分析一下通信模型的逻辑。
+
+#### 2.3.1 `WebRTC`底层逻辑
+##### 1. 工作流程概述
+本来想着先把demo跑通再看原理改进，但是demo跑不通的时候还是得补原理。磨刀不误砍柴工，开干。
+首先，我们介绍一下WebRTC技术的流程。下面的图表示一个单向连接（一方发起，另一方接受）的工作流：
+
+![WebRTC工作流程](https://upload-images.jianshu.io/upload_images/26132171-92cf1439d62a28b3.png?imageMogr2/auto-orient/strip|imageView2/2/w/1003/format/webp "单向的WebRTC工作流")
+
+每个客户端都要扮演**发送者**和**接收者**两个角色，为了简化问题分析，我们考虑单向连接的模型。设本地的连接为`Local Connection`，远程的连接为`Remote Connection`。初始化时：
+- Peer A创建一个`Local RTCPeerConnection`，简称为`ALC`；
+- Peer B创建一个`Remote RTCPeerConnection`，简称`BRC`。
+
+##### 2. 收发双方的工作流
+发送方Peer A的工作流程如下：
+1. **获取stream**：调用接口`navigator.mediaDevices.getUserMedia(mediaConstraints)`捕捉本地media stream。
+2. **添加stream**：`ALC`调用`addTrack()`，将stream添加到发送轨道上。
+3. **创建请求**：`ALC`调用`createOffer()`创建一个offer。
+4. **创建本地描述**：`ALC`调用`setLocalDescription()`将offer设置为本地描述。
+5. **触发`onCandidate`事件**
+6. **信令服务器派送信息**：`ALC`触发`onCandidate`事件，通过信令服务器发送`candidate`和`offer`
+7. **等待应答**：Peer A等待Peer B的应答消息answer。
+8. **设置远端描述**：`ALC`调用`setRemoteDescription()`将anwer设置为远程描述。
+
+接收方Peer B的工作流程如下：
+1. **触发ontrack**：`BRC`在接收到媒体时被触发，事件带有媒体信息。
+2. **添加ICE候选信息**：`BRC`收到candidate时，添加到本地的`IceCandidate`中。
+3. **设置远端描述**：`BRC`接收到offer请求时，调用`setRemoteDescription(offer)`设置远端描述。
+4. **创建应答**：`BRC`调用`createAnswer()`创建一个应答。
+5. **创建本地描述**：`BRC`调用`setLocalDescription(answer)`设置本地描述。
+6. **发送应答**：`BRC`通过信令服务器将anwer发送到Peer A。
+
+#### 2.3.2 实现思路
+1. 两个浏览器打开同一个页面，连接到同一个`socket`
+2. 此时由一个端点建立连接
+   - 发起建立连接的一端发送`offer`（携带信号源信息）
+   - 另一端收到`offer`之后，发出响应`answer`（携带信号源信息）
+   - `offer`端收到`answer`端信息进行存储
+3. 此时，双方均已得到所需要的信息（local端和remote端的信息）
+   - 握手的过程中双方有了对方的`localDescription`和`remoteDescription`
+   - 上述信息将会**触发**`oncandidate`，
+   - 
+
+
 
 # 踩坑记录
 ## 前后端框架
