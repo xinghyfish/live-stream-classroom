@@ -31,7 +31,7 @@
     </div>
     <div id="video-part">
         <video id="localClient" autoplay playsinline></video>
-        <video id="remoteClient" autoplay playsinline>S</video>
+        <video id="remoteClient" autoplay playsinline></video>
     </div>
 
     <div id="tool-part">
@@ -111,7 +111,7 @@
         <textarea class="text" id="user-input" placeholder="输入消息…"></textarea>
     </div>
     <div id="send-part">
-        <input id="send-button" value="发送消息" type="button" onclick="sendMsg();">
+        <input id="send-button" value="发送消息" type="button" onclick="sendMessage();">
     </div>
 </div>
 </body>
@@ -175,7 +175,6 @@
                     userMediaConstraints.video = true;
                 }
                 loadUserStream();
-                startWebRTC();
             }
         }
     });
@@ -194,7 +193,6 @@
                     displayMediaConstraints.video = false;
                 }
                 loadDisplayStream();
-                startWebRTC()
             }
         }
     });
@@ -211,6 +209,14 @@
         el: '#member-list',
         data: {
             members: []
+        },
+        methods: {
+            watchVideo(member) {
+                createOffer();
+            },
+            watchScreen(member) {
+                createOffer();
+            }
         },
         computed: {
             isShow() {
@@ -301,9 +307,9 @@
     });
 
     let configuration = {}; // { iceServers: [{ urls: 'stun:stun.l.google.com:19302' }] }
-    let startButton = document.getElementById("startButton");
     let localClient = document.getElementById("localClient");
     let remoteClient = document.getElementById("remoteClient");
+    let Connection;
 
     // RTC点对点配置
     let localConnection = new RTCPeerConnection(configuration);
@@ -319,14 +325,47 @@
         video: false,
     }
 
+    function startPeerConnection() {
+        //return;
+        var config = {
+            'iceServers': [
+                //{ 'urls': 'stun:stun.xten.com:3478' },
+                //{ 'urls': 'stun:stun.voxgratia.org:3478' },
+                { 'url': 'stun:stun.l.google.com:19302' }
+            ]
+        };
+        config = {
+            iceServers: [
+                { urls: 'stun:stun.l.google.com:19302' },
+                { urls: 'stun:global.stun.twilio.com:3478?transport=udp' }
+            ],
+            //sdpSemantics: 'unified-plan'
+        };
+        Connection = new RTCPeerConnection(config);
+        Connection.onicecandidate = function(e) {
+            console.log('onicecandidate');
+            if (e.candidate) {
+                ws.send(JSON.stringify({
+                    type: "webrtc",
+                    key: "candidate",
+                    data: {
+                        candidate: e.candidate
+                    }
+                }));
+            }
+        }
+        Connection.onaddstream = function(e) {
+            console.log('onaddstream');
+            remoteClient.srcObject = e.stream;
+        }
+    }
+    
     function loadUserStream() {
         navigator.mediaDevices.getUserMedia(
             userMediaConstraints
         ).then((stream) => {
             localClient.srcObject = stream;
-            stream.getTracks().forEach((track) => {
-                localConnection.addTrack(track, stream);
-            })
+            Connection.addStream(stream);
         }).catch((error) => {
             console.log(error);
         });
@@ -337,11 +376,23 @@
             displayMediaConstraints
         ).then((stream) => {
             localClient.srcObject = stream;
-            stream.getTracks().forEach((track) => {
-                localConnection.addTrack(track, stream);
-            })
+            Connection.addStream(stream);
         }).catch((error) => {
             console.log(error);
+        });
+    }
+
+    function createOffer(){
+        //发送offer和answer的函数，发送本地session描述
+        Connection.createOffer().then(offer => {
+            Connection.setLocalDescription(offer);
+            ws.send(JSON.stringify({
+                type: "webrtc",
+                key: "offer",
+                data: {
+                    sdp: offer
+                }
+            }));
         });
     }
 
@@ -359,42 +410,6 @@
         });
     }
 
-    localConnection.oncandidate = (event) => {
-        console.log("oncandidate");
-        ws.send(JSON.stringify({
-            type: "webrtc",
-            key: "candidate",
-            data: event.candidate
-        }));
-    }
-
-    remoteConnection.addEventListener('addStream', (event) => {
-        console.log("FUCK!");
-        remoteClient.srcObject = event.streams[0];
-    });
-
-    function receivedCandidate(data) {
-        remoteConnection.addIceCandidate(new RTCIceCandidate(data));
-    }
-
-    function receivedOffer(data) {
-        remoteConnection.setRemoteDescription(data);
-        remoteConnection.createAnswer().then((answer) => {
-            remoteConnection.setLocalDescription(answer);
-            ws.send(JSON.stringify({
-                type: "webrtc",
-                key: "answer",
-                data: data
-            }));
-        }).catch((error) => {
-            console.log("receivedOffer createAnswer error: " + error);
-        });
-    }
-
-    function receivedAnswer(data) {
-        localConnection.setRemoteDescription(data);
-    }
-
     function onLoad() {
         ws = new WebSocket("ws://" + window.location.host + "/ws?teacherName=" + '{{ teacherName }}' + "&courseName=" + '{{ courseName }}')
         ws.onopen = function () {
@@ -410,9 +425,21 @@
             if (message.type === "close-connection") {
                 ws.close();
             } else if (message.type === "user-message") {
-                historyVm.messages.push(message.message);
-                let his_box = document.getElementById('chat-body');
-                his_box.scrollTop = his_box.scrollHeight;
+                console.log("get message!");
+                var rendered_text =  
+                    '<div class="chat_left_item_1 ">' + message.account + '</div>' + 
+                    '<div class="chat_left_item_2">' + 
+                        '<div class="chat_time">' + message.time + '</div>' + 
+                        '<div class="chat_left_content">' + 
+                            message.message + 
+                        '</div>' + 
+                    '</div>';
+                var newDiv = document.createElement("div");
+                newDiv.setAttribute("class", "chat_left clearfixt");
+                newDiv.innerHTML = rendered_text;
+                var chatBody = document.getElementById("chat-body");
+                chatBody.append(newDiv);
+                chatBody.scrollTop = chatBody.scrollHeight;
             } else if (message.type === "answer-signup") {
                 let info = {
                     type: "answer-signup",
@@ -434,18 +461,22 @@
             } else if (message.type === "answer-member-list") {
                 memberListVm.members = message.memberlist
             } else if (message.type === "webrtc") {
-                switch (message.key) {
-                    case "offer":
-                        console.log("offer");
-                        return receivedOffer(message.data);
-                    case "answer":
-                        console.log("answer");
-                        return receivedAnswer(message.data);
-                    case "candidate":
-                        console.log("candidate");
-                        return receivedCandidate(message.data);
-                    default:
-                        console.log(message.data);
+                if (message.key === "candidate" && message.data.candidate) {
+                    Connection.addIceCandidate(new RTCIceCandidate(message.data.candidate));
+                } else if (message.key === "offer") {
+                    Connection.setRemoteDescription(message.data.sdp);
+                    Connection.createAnswer().then(answer => {
+                        Connection.setLocalDescription(answer);
+                        ws.send(JSON.stringify({
+                            type: "webrtc",
+                            key: "answer",
+                            data: {
+                                sdp: answer
+                            }
+                        }));
+                    })
+                } else if (message.key == "answer") {
+                    Connection.setRemoteDescription(message.data.sdp);
                 }
             }
         }
@@ -456,18 +487,45 @@
             else
                 window.location.href = "/teacher/user-web";
         }
+
+        startPeerConnection();
     }
 
-    function sendMsg() {
+
+    function PrefixInteger(num, n) {
+        return (Array(n).join(0) + num).slice(-n);
+    }
+
+    function sendMessage() {
+        let text = document.getElementById('user-input').value;
+        let date = new Date();
+        var hour = date.getHours(), minute = date.getMinutes();
+        let send_time = PrefixInteger(hour, 2) + ":" + PrefixInteger(minute, 2);
+        var rendered_text = 
+            '<div class="chat_right_item_1 clearfix">' + username + '</div>' + 
+            '<div class="chat_right_item_2">' + 
+                '<div class="chat_right_time clearfix">'+ send_time +'</div>'+
+                '<div class="chat_right_content clearfix">'+ text +'</div>'
+                +'</div>';
+        
+        var newDiv = document.createElement("div");
+        newDiv.setAttribute("class", "chat_right");
+        newDiv.innerHTML = rendered_text;
+        var chatBody = document.getElementById("chat-body");
+        chatBody.append(newDiv);
+
         ws.send(JSON.stringify({
             type: "user-message",
+            account: username,
+            time: send_time,
             message: document.getElementById('user-input').value
         }));
+
         document.getElementById("user-input").value = "";
     }
 
     function exit() {
-        ws.close();
+        ws.send(JSON.stringify({type: "close-connection"}));
     }
 </script>
 </html>

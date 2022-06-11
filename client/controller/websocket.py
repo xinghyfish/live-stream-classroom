@@ -28,7 +28,7 @@ class WSHandler(WebSocketHandler, ABC):
             filepath = os.path.join(os.getcwd(), "resources/history/%s/" % (teacherName))
             filename = courseName + ".txt"
         else:
-            print("Wrong command!")
+            print("Json Invalid Property <type>: expected \"message\" or \"signup\", but given \"%s\"" % type)
             return None
         if not os.path.exists(filepath):
             os.makedirs(filepath)
@@ -69,7 +69,6 @@ class WSHandler(WebSocketHandler, ABC):
         
         # 课程人数信息：修改课程人数
         size = len(self.pools[teacherName][courseName].users)
-        print(size)
         for user in self.pools[teacherName][courseName].users:
             user.write_message(json.dumps({ "type": "count-change", "count": size}))
 
@@ -98,11 +97,14 @@ class WSHandler(WebSocketHandler, ABC):
                 fp = open(filepath, 'a', encoding='utf-8')
                 fp.write(send_message)
                 fp.close()
+        elif jsonMessage["type"] == "close-connection":
+            self.on_close()
         elif jsonMessage["type"] == "user-message":
             # 通过聊天室发送的信息
-            send_message = tm + self.pools[teacherName][courseName].user_dict[self] + ': ' + message + '\n'
+            send_message = tm + self.pools[teacherName][courseName].user_dict[self] + ': ' + jsonMessage["message"] + '\n'
             for user in self.pools[teacherName][courseName].users:
-                user.write_message(send_message)
+                if user != self:
+                    user.write_message(jsonMessage)
                 fp = open(filepath, 'a', encoding='utf-8')
                 fp.write(send_message)
                 fp.close()
@@ -120,7 +122,7 @@ class WSHandler(WebSocketHandler, ABC):
                 elif jsonMessage["status"] == 'refuse':
                     fp.write("%s 未签到\n" % student)
                 else:
-                    print("Json Wrong command code")
+                    print("Json Invalid Property <status>: expected \"confirm\" or \"refuse\", but given \"%s\"" % jsonMessage["status"])
         elif jsonMessage["type"] == "offer-member-list":
             memberList = list(set(self.pools[teacherName][courseName].user_dict.values()))
             self.write_message(json.dumps({
@@ -136,7 +138,7 @@ class WSHandler(WebSocketHandler, ABC):
                         "data": jsonMessage["data"]
                     }));
         else:
-            print("Invalid TYPE!")
+            print("Json Invalid Property <type>: given \"%s\"" % jsonMessage["type"])
         
 
 
@@ -145,20 +147,19 @@ class WSHandler(WebSocketHandler, ABC):
         courseName = self.get_argument("courseName")
         username = self.get_cookie("username")
 
-        self.pools[teacherName][courseName].users.discard(self)
-        filepath = self.file_path(self, "message")
+        # 这里出现了一点点小问题，这行代码防止出现KeyError
+        # 可能跟websocket协议挥手顺序有关，anyway，暂时就这么写着
+        if self not in self.pools[teacherName][courseName].users:
+            return
+
         action_time = time.asctime(time.localtime(time.time()))[-13:-4]
         send_message = action_time + '【' + self.pools[teacherName][courseName].user_dict[self] + '】已离开直播间'
-        fp = open(file=filepath, mode='a', encoding='utf-8')
-        fp.write(send_message)
-        fp.close()
         for user in self.pools[teacherName][courseName].users:
             filepath = self.file_path(user, "message")
             user.write_message(send_message)
             fp = open(filepath, 'a', encoding='utf-8')
             fp.write(send_message)
             fp.close()
-        self.pools[teacherName][courseName].user_dict.pop(self)
 
         if teacherName == username:
             courseID = db.query_data(f"""
@@ -172,4 +173,9 @@ class WSHandler(WebSocketHandler, ABC):
                 where courseID = '{ courseID[0]["id"] }'
             """)
             for user in self.pools[teacherName][courseName].users:
-                self.write_message(json.dumps({ "type": "close-connection" }));
+                if user != self:
+                    user.write_message(json.dumps({ "type": "close-connection" }));
+        
+        self.pools[teacherName][courseName].users.discard(self)
+        self.pools[teacherName][courseName].user_dict.pop(self)
+        self.write_message(json.dumps({ "type": "close-connection" }))
