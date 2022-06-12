@@ -117,22 +117,14 @@
 </body>
 
 <script src="../static/js/vue.js"></script>
+<script src="../static/js/functions.js"></script>
 <script>
-
-    function get_cookie(name) {
-        const strCookie = document.cookie;
-        const arrCookie = strCookie.split("; ");
-        for (let i = 0; i < arrCookie.length; ++i) {
-            let arr = arrCookie[i].split("=");
-            if (arr[0] === name)
-                return arr[1];
-        }
-        return "";
-    }
-
     // 声明全局变量
     const username = get_cookie("username");
-    var ws;
+    var ws; // ws连接
+    let localClient = document.getElementById("localClient");
+    let remoteClient = document.getElementById("remoteClient");
+    let Connection;
 
 	let historyVm = new Vue({
         el: '#chat-body',
@@ -149,14 +141,6 @@
         methods: {
             microphone: function() {
                 this.open = !this.open;
-                /**
-                if (this.open === false) {
-                    constraints.audio = false;
-                } else {
-                    constraints.audio = true;
-                }
-                initStream();
-                */
             }
         }
     });
@@ -284,49 +268,79 @@
             apps: [
                 { event: 'drawEvent', name: '白板', icon: '../static/icons/白板.svg' },
                 { event: 'singupEvent', name: '签到', icon: '../static/icons/签到.svg'},
+                { event: 'downloadChatRecord', name: '聊天记录', icon: '../static/icons/聊天记录.svg'},
+                { event: 'downloadSignupRecord', name: '签到记录', icon: '../static/icons/数据汇总.svg'},
             ]
         },
         methods: {
             getLists: function(itemMethods) {
-                if (itemMethods == "drawEvent")
+                if (itemMethods == "drawEvent") {
                     this.drawEvent();
-                else 
+                } else if (itemMethods == "signupEvent") {
                     this.signupEvent();
+                } else if (itemMethods == "downloadChatRecord") {
+                    this.downloadChatRecord();
+                } else if (itemMethods == "downloadSignupRecord") {
+                    this.downloadSignupRecord();
+                } else {
+                    alert("非法指令！");
+                }
             },
             drawEvent: function() {
                 window.location.href = "/draw";
             },
             signupEvent: function() {
-                console.log("YES");
                 if (username !== '{{ teacherName }}')
                     alert("您的身份不是教师，无法发布签到内容！");
                 else
                     ws.send(JSON.stringify({ type: "offer-signup" }));
+            },
+            downloadChatRecord: function() {
+                let href = "../resources/history/" + '{{ teacherName }}' + "/" + '{{ courseName }}' + "/" + username + ".txt";
+                let filename = '{{ teacherName }}' + "老师-" + '{{ courseName }}' + "课程的聊天记录.txt";
+                download(href, filename);
             }
         }
     });
 
-    let configuration = {}; // { iceServers: [{ urls: 'stun:stun.l.google.com:19302' }] }
-    let localClient = document.getElementById("localClient");
-    let remoteClient = document.getElementById("remoteClient");
-    let Connection;
-
-    // RTC点对点配置
-    let localConnection = new RTCPeerConnection(configuration);
-    let remoteConnection = new RTCPeerConnection(configuration);
-
+    // 初始化用户媒体约束
     let userMediaConstraints = {
         audio: true,
         video: false,
     };
-
+    // 初始化显示媒体约束
     let displayMediaConstraints = {
         audio: true,
         video: false,
     }
 
+    // 加载用户摄像头、麦克风捕获的媒体流
+    function loadUserStream() {
+        navigator.mediaDevices.getUserMedia(
+            userMediaConstraints
+        ).then((stream) => {
+            localClient.srcObject = stream;
+            Connection.addStream(stream);
+        }).catch((error) => {
+            alert("获取摄像头或麦克风失败：" + error);
+        });
+    }
+
+    // 加载用户机器内置媒体设备（屏幕）的媒体流
+    function loadDisplayStream() {
+        navigator.mediaDevices.getDisplayMedia(
+            displayMediaConstraints
+        ).then((stream) => {
+            localClient.srcObject = stream;
+            Connection.addStream(stream);
+        }).catch((error) => {
+            alert("获取屏幕媒体流失败：" + error);
+        });
+    }
+
+    // 配置信令服务器并建立RTCPeerConnection，绑定oncandidate和onaddstream事件
     function startPeerConnection() {
-        //return;
+        // 信令服务器配置
         var config = {
             'iceServers': [
                 //{ 'urls': 'stun:stun.xten.com:3478' },
@@ -341,9 +355,10 @@
             ],
             //sdpSemantics: 'unified-plan'
         };
+        // 建立RTCPeerConnection连接
         Connection = new RTCPeerConnection(config);
+        // 绑定icecandidate事件
         Connection.onicecandidate = function(e) {
-            console.log('onicecandidate');
             if (e.candidate) {
                 ws.send(JSON.stringify({
                     type: "webrtc",
@@ -354,34 +369,13 @@
                 }));
             }
         }
+        // 绑定addstream事件，用户一旦addstream则将媒体流数据放到remoteClient播放器
         Connection.onaddstream = function(e) {
-            console.log('onaddstream');
             remoteClient.srcObject = e.stream;
         }
     }
     
-    function loadUserStream() {
-        navigator.mediaDevices.getUserMedia(
-            userMediaConstraints
-        ).then((stream) => {
-            localClient.srcObject = stream;
-            Connection.addStream(stream);
-        }).catch((error) => {
-            console.log(error);
-        });
-    }
-
-    function loadDisplayStream() {
-        navigator.mediaDevices.getDisplayMedia(
-            displayMediaConstraints
-        ).then((stream) => {
-            localClient.srcObject = stream;
-            Connection.addStream(stream);
-        }).catch((error) => {
-            console.log(error);
-        });
-    }
-
+    // 创建offer，设置websocket通信格式，通过服务器进行交换
     function createOffer(){
         //发送offer和answer的函数，发送本地session描述
         Connection.createOffer().then(offer => {
@@ -396,20 +390,21 @@
         });
     }
 
-    function startWebRTC() {
-        console.log("start webRTC");
-        localConnection.createOffer().then((offer) => {
-            localConnection.setLocalDescription(offer);
+    // 创建answer，设置websocket通信格式，通过服务器进行交换
+    function createAnswer() {
+        Connection.createAnswer().then(answer => {
+            Connection.setLocalDescription(answer);
             ws.send(JSON.stringify({
                 type: "webrtc",
-                key: "offer",
-                data: offer
+                key: "answer",
+                data: {
+                    sdp: answer
+                }
             }));
-        }).catch((error) => {
-            console.log("create offer error: " + error);
         });
     }
 
+    // 规定了客户端websocket通信的格式（使用JSON）
     function onLoad() {
         ws = new WebSocket("ws://" + window.location.host + "/ws?teacherName=" + '{{ teacherName }}' + "&courseName=" + '{{ courseName }}')
         ws.onopen = function () {
@@ -418,14 +413,12 @@
 
         ws.onmessage = function (e) {
             let message = JSON.parse(e.data);
-            console.log(message);
-            if (!message)
-                console.log("websocket-message ERROR!");
-
+            if (!message) {
+                console.log("websocket消息为空!");
+            }
             if (message.type === "close-connection") {
                 ws.close();
             } else if (message.type === "user-message") {
-                console.log("get message!");
                 var rendered_text =  
                     '<div class="chat_left_item_1 ">' + message.account + '</div>' + 
                     '<div class="chat_left_item_2">' + 
@@ -465,16 +458,7 @@
                     Connection.addIceCandidate(new RTCIceCandidate(message.data.candidate));
                 } else if (message.key === "offer") {
                     Connection.setRemoteDescription(message.data.sdp);
-                    Connection.createAnswer().then(answer => {
-                        Connection.setLocalDescription(answer);
-                        ws.send(JSON.stringify({
-                            type: "webrtc",
-                            key: "answer",
-                            data: {
-                                sdp: answer
-                            }
-                        }));
-                    })
+                    createAnswer();
                 } else if (message.key == "answer") {
                     Connection.setRemoteDescription(message.data.sdp);
                 }
@@ -488,14 +472,11 @@
                 window.location.href = "/teacher/user-web";
         }
 
+        // 加载完ws动作后建立P2P连接，等待用户进一步动作
         startPeerConnection();
     }
 
-
-    function PrefixInteger(num, n) {
-        return (Array(n).join(0) + num).slice(-n);
-    }
-
+    // 用户点击发送消息后触发的函数
     function sendMessage() {
         let text = document.getElementById('user-input').value;
         let date = new Date();
@@ -525,7 +506,8 @@
     }
 
     function exit() {
-        ws.send(JSON.stringify({type: "close-connection"}));
+        ws.close();
     }
+
 </script>
 </html>

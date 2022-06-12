@@ -166,9 +166,9 @@ body {
 
 #app-list {
     position: absolute;
-    top: 400px;
+    top: 370px;
     left: 600px;
-    height: 150px;
+    height: 180px;
     width: 180px;
     background-color: #fefefe;
     display: none;
@@ -176,19 +176,19 @@ body {
 
 .app-item {
     position: relative;
-    width: 40px;
+    width: 80px;
     padding: 5px;
+    display: inline-block;
 }
 
 .app-icon {
     position: relative;
-    width: 90%;
-    text-align: center;
+    width: 60%;
+    left: 20%;
 }
 
 .app-name {
     position: relative;
-    width: 100%;
     text-align: center;
 }
 

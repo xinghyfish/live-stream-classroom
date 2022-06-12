@@ -22,10 +22,10 @@ class WSHandler(WebSocketHandler, ABC):
         teacherName = self.get_argument("teacherName")
         courseName = self.get_argument("courseName")
         if type == "message":
-            filepath = os.path.join(os.getcwd(), "resources/history/%s/%s/" % (teacherName, courseName))
+            filepath = os.path.join(os.getcwd(), "static/resources/history/%s/%s/" % (teacherName, courseName))
             filename = self.pools[teacherName][courseName].user_dict[user] + ".txt"    
         elif type == "signup":
-            filepath = os.path.join(os.getcwd(), "resources/history/%s/" % (teacherName))
+            filepath = os.path.join(os.getcwd(), "static/resources/history/%s/" % (teacherName))
             filename = courseName + ".txt"
         else:
             print("Json Invalid Property <type>: expected \"message\" or \"signup\", but given \"%s\"" % type)
@@ -97,8 +97,6 @@ class WSHandler(WebSocketHandler, ABC):
                 fp = open(filepath, 'a', encoding='utf-8')
                 fp.write(send_message)
                 fp.close()
-        elif jsonMessage["type"] == "close-connection":
-            self.on_close()
         elif jsonMessage["type"] == "user-message":
             # 通过聊天室发送的信息
             send_message = tm + self.pools[teacherName][courseName].user_dict[self] + ': ' + jsonMessage["message"] + '\n'
@@ -156,7 +154,6 @@ class WSHandler(WebSocketHandler, ABC):
         send_message = action_time + '【' + self.pools[teacherName][courseName].user_dict[self] + '】已离开直播间'
         for user in self.pools[teacherName][courseName].users:
             filepath = self.file_path(user, "message")
-            user.write_message(send_message)
             fp = open(filepath, 'a', encoding='utf-8')
             fp.write(send_message)
             fp.close()
@@ -178,4 +175,3 @@ class WSHandler(WebSocketHandler, ABC):
         
         self.pools[teacherName][courseName].users.discard(self)
         self.pools[teacherName][courseName].user_dict.pop(self)
-        self.write_message(json.dumps({ "type": "close-connection" }))
