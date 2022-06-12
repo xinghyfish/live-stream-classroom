@@ -1,0 +1,38 @@
+{% extends base.html %}
+
+{% block main %}
+<script>
+    function addCourse(course) {
+        confirmAdd = confirm("请问您是否确认选课？");
+        if (confirmAdd === false) {
+            return;
+        } else {
+            $.post("/student/add-course", course, function () {
+                window.location.href = "/student/user-web";
+            });
+        }
+    }
+</script>
+<div id="main">
+    <div id="subtitle">
+        可选课程
+    </div>
+    <button class="addCourseButton" onclick="window.location.href='/student/user-web'">返回</button>
+    <table id="course-table">
+        <tr>
+            <td class="thead">课程</td>
+            <td class="thead">授课班级</td>
+            <td class="thead">授课老师</td>
+            <td class="thead">选择</td>
+        </tr>
+        {% for i in range(len(courses)) %}
+        <tr>
+            <td>{{ courses[i]["name"] }}</td>
+            <td>{{ courses[i]["class"] }}</td>
+            <td>{{ courses[i]["teacherName"] }}</td>
+            <td><button class="chouse-course" onclick="addCourse({{ courses[i] }})">选择</button></td>
+        </tr>
+        {% end %}
+    </table>
+</div>
+{% end %}

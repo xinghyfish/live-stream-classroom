@@ -21,7 +21,6 @@ class StudentHandler(tornado.web.RequestHandler, ABC):
             where studentName = '{username}'
         """)
         courses = []
-        current_course = None
         for TC in TCs:
             courseID = TC["courseID"]
             course = db.query_data(f"""
@@ -43,7 +42,46 @@ class StudentHandler(tornado.web.RequestHandler, ABC):
         return self.render("student/user-web.html", user=user, courses=courses, current_course=self.current_course)
 
     def post(self):
-        username = self.get_cookie("username")
         teacherName = self.current_course["teacherName"]
         courseName = self.current_course["name"]
         return self.redirect("/live?teacherName=%s&courseName=%s" % (teacherName, courseName))
+
+
+class StudentAddCourseHander(tornado.web.RequestHandler):
+    def post(self):
+        post_data = self.request.body_arguments
+        course = {x: post_data.get(x)[0].decode("utf-8") for x in post_data.keys()}
+        studentName = self.get_cookie("username")
+        courseID = course["id"]
+        teacherName = course["teacherName"]
+        db.insert_or_update_data(f"""
+            insert into SC(studentName, courseID, teacherName)
+            values ('{studentName}', '{courseID}', '{teacherName}')
+        """)
+        return self.redirect("/student/user-web")
+    
+    def get(self):
+        user = dict()
+        username = self.get_cookie("username")
+        user["username"] = username
+        stu_courses = []
+        courses = db.query_data(f"""
+            select * from course
+            where (
+                select count(1) from SC
+                where 
+                    SC.studentName = '{ username }' 
+                        and 
+                    course.id = SC.courseID
+            ) = 0
+        """)
+        for i in range(len(courses)):
+            teacherNames = db.query_data(f"""
+                select teacherName from TC
+                where TC.courseID = '{courses[i]["id"]}' 
+            """)
+            for teacherName in teacherNames:
+                courses[i]["teacherName"] = teacherName["teacherName"]
+                stu_courses.append(dict(courses[i]))
+
+        return self.render("student/add-course.html", courses=stu_courses, user=user)

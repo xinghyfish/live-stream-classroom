@@ -13,7 +13,6 @@ body {
     position: relative;
     background-color: rgb(229,229,234);
     padding-top: 10px;
-    padding-bottom: 10px;
     text-align: center;
     font-size: 20px;
     color: black;
@@ -75,6 +74,26 @@ td {
     font-size: 20px;
     color: blue;
     text-align: left;
+}
+
+.addCourseButton {
+    position: absolute;
+    left: 1180px;
+    width: 100px;
+    height: 40px;
+    top: 85px;
+    font-size: 16px;
+    background-color: rgb(173, 216, 230);
+    border-radius: 5px;
+}
+
+.addCourseButton:hover {
+    background-color: rgb(89, 193, 228);
+}
+
+.chouse-course {
+    width: 80px;
+    height: 30px;
 }
 
 #current-class-info {

@@ -1,11 +1,11 @@
 {% extends base.html %}
 
 {% block info %}
+<script src="../../static/js/functions.js"></script>
 <script>
-function jump(i) {
-    const teacherName = "James";
-    console.log(i)
-    window.location.href = "/live?teacherName=" + teacherName + "&courseName=" + i['name'];
+function jump(course) {
+    const teacherName = get_cookie("username");
+    window.location.href = "/live?teacherName=" + teacherName + "&courseName=" + course['name'];
 }
 </script>
 

@@ -17,7 +17,6 @@ if __name__ == '__main__':
     handlers = [
         (r'/', IndexHandler),
         (r'/log', LoginHandler),
-        (r'/hello', HelloHandler),
         (r'/register', RegisterHandler),
         (r'/teacher/user-web', TeacherUserWebHandler),
         (r'/teacher/course-info', TeacherCourseInfoHandler),
@@ -25,6 +24,7 @@ if __name__ == '__main__':
         (r'/teacher/add-course', TeacherAddCourseHandler),
         (r'/draw', DrawHandler),
         (r'/student/user-web', StudentHandler),
+        (r'/student/add-course', StudentAddCourseHander),
         (r'/live', LiveHandler),
         (r'/ws', WSHandler),
     ]

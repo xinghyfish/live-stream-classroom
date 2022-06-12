@@ -1,10 +1,22 @@
 {% extends base.html %}
 
+<script>
+    const btn = new Vue({
+        el: "#enter-btn-enabled",
+        methods: {
+            jump: function (courseName, teacherName) {
+                window.location.href = "/live?teacherName=" + teacherName + "&courseName=" + courseName;
+            }
+        }
+    });
+</script>
+
 {% block main %}
 <div id="main">
     <div id="subtitle">
         课程表
     </div>
+    <button class="addCourseButton" onclick="window.location.href = '/student/add-course'">添加课程</button>
     <table id="course-table">
         <tr>
             <td class="thead">课程</td>
@@ -49,14 +61,3 @@
     </div>
 </div>
 {% end %}
-
-<script>
-    const btn = new Vue({
-        el: "#enter-btn-enabled",
-        methods: {
-            jump: function (courseName, teacherName) {
-                window.location.href = "/live?teacherName=" + teacherName + "&courseName=" + courseName;
-            }
-        }
-    });
-</script>
