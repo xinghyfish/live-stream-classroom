@@ -14,12 +14,3 @@ function get_cookie(name) {
 function PrefixInteger(num, n) {
     return (Array(n).join(0) + num).slice(-n);
 }
-
-// 下载功能封装
-function download(href, title) {
-    const a = document.createElement('a');
-    a.setAttribute('href', href);
-    // 添加download属性，防止打开文件
-    a.setAttribute('download', title);
-    a.click();
-}

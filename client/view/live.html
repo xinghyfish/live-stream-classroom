@@ -117,10 +117,11 @@
 </body>
 
 <script src="../static/js/vue.js"></script>
-<script src="../static/js/functions.js"></script>
+<script type="text/javascript" src="../static/js/functions.js"></script>
 <script>
     // 声明全局变量
     const username = get_cookie("username");
+    let teacherName = '{{ teacherName }}', courseName = '{{ courseName }}';
     var ws; // ws连接
     let localClient = document.getElementById("localClient");
     let remoteClient = document.getElementById("remoteClient");
@@ -273,6 +274,18 @@
             ]
         },
         methods: {
+            // 下载功能封装
+            downloadFile: function(href, title) {
+                const a = document.createElement('a');
+                a.style = "display: none";
+                a.href = href;
+                // 添加download属性，防止打开文件
+                a.download = title;
+                document.body.append(a);
+                a.click();
+                document.body.removeChild(a);
+                a.remove();
+            },
             getLists: function(itemMethods) {
                 if (itemMethods == "drawEvent") {
                     this.drawEvent();
@@ -296,9 +309,15 @@
                     ws.send(JSON.stringify({ type: "offer-signup" }));
             },
             downloadChatRecord: function() {
-                let href = "../resources/history/" + '{{ teacherName }}' + "/" + '{{ courseName }}' + "/" + username + ".txt";
-                let filename = '{{ teacherName }}' + "老师-" + '{{ courseName }}' + "课程的聊天记录.txt";
-                download(href, filename);
+                let href = `/static/resources/history/${teacherName}/${courseName}/${username}.txt`;
+                console.log(href);
+                let filename = `${teacherName}老师的${courseName}课程的聊天记录`;
+                this.downloadFile(href, filename);
+            },
+            downloadSignupRecord: function() {
+                let href = `/static/resources/signup/${teacherName}/${courseName}.txt`;
+                let filename = `${courseName}课程考勤表`;
+                this.downloadFile(href, filename);
             }
         }
     });
