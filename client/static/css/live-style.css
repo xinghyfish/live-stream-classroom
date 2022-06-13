@@ -66,13 +66,32 @@ body {
     border-bottom: #666666 solid 1px;
 }
 
+#localCaption {
+    position: relative;
+    left: 18%;
+    top: 48%;
+    color: white;
+    z-index: 2;
+}
+
 #localClient {
     position: absolute;
     left: 0;
     top: 25%;
     height: 50%;
-    width: 50%;
+    width: 422px;
     color: #64b2ed;
+    background-color: black;
+    z-index: 1;
+    border: solid white 1px;
+}
+
+#remoteCaption {
+    position: relative;
+    left: 52%;
+    top: 48%;
+    color: white;
+    z-index: 2;
 }
 
 #remoteClient {
@@ -80,8 +99,10 @@ body {
     left: 50%;
     top: 25%;
     height: 50%;
-    width: 50%;
+    width: 422px;
     color: #64b2ed;
+    background-color: black;
+    border: solid white 1px;
 }
 
 #tool-part {

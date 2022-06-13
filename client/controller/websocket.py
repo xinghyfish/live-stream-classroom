@@ -177,7 +177,7 @@ class WSHandler(WebSocketHandler, ABC):
             db.insert_or_update_data(f"""
                 update TC
                 set status = 0
-                where courseID = '{ courseID[0]["id"] }'
+                where courseID = '{ courseID[0]["id"] }' and teacherName = '{ teacherName }'
             """)
             for user in self.pools[teacherName][courseName].users:
                 if user != self:

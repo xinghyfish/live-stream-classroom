@@ -6,6 +6,7 @@
     <title>{{ teacherName }}的{{ courseName }}直播间</title>
     <link type="text/css" href="{{ static_url('css/live-style.css') }}" rel="stylesheet"/>
     <script src="https://code.jquery.com/jquery-3.1.1.min.js"></script>
+    <script src="../static/js/functions.js"></script>
     <script type="text/javascript">
         $(function() {
             $("#uploadIcon").click(function() {
@@ -28,7 +29,10 @@
                     }
                 });
             })
-        })
+        });
+
+        openFullscreen(localClient);
+        openFullscreen(remoteClient);
     </script>
 
 </head>
@@ -61,7 +65,9 @@
         <div id="people-count"><b>在线人数：</b>[[ peopleCount ]]</div>
     </div>
     <div id="video-part">
+        <span id="localCaption">您暂停了媒体传输</span>
         <video id="localClient" autoplay playsinline></video>
+        <span id="remoteCaption">对方暂停了媒体传输</span>
         <video id="remoteClient" autoplay playsinline></video>
     </div>
 
@@ -94,7 +100,7 @@
             <img src="../static/icons/好友.svg" alt="查看成员" class="icon">
             <div class="caption">查看成员</div>
         </div>
-        <div id="record-screen" class="item" @click="open = !open">
+        <div id="record-screen" class="item" @click="showOrHide()">
             <img v-if="open" src="../static/icons/摄像头.svg" alt="结束录制" class="icon">
             <img v-else src="../static/icons/摄像头_关闭.svg" alt="开始录制" class="icon">
             <div class="caption">
@@ -154,7 +160,7 @@
     // 声明全局变量
     const username = get_cookie("username");
     let teacherName = '{{ teacherName }}', courseName = '{{ courseName }}';
-    var ws; // ws连接
+    var ws, stream; // ws连接
     let localClient = document.getElementById("localClient");
     let remoteClient = document.getElementById("remoteClient");
     let Connection;
@@ -174,17 +180,23 @@
     let cameraVm = new Vue({
         el: '#camera',
         data: {
-            open: false
+            open: false,
         },
         methods: {
             camera: function () {
                 this.open = !this.open;
                 if (this.open === false) {
+                    $("#localClient").css({"z-index": 1});
                     userMediaConstraints.video = false;
+                    loadUserStream();
+                    Connection.close();
                 } else {
+                    $("#localClient").css({"z-index": 3});
                     userMediaConstraints.video = true;
+                    loadUserStream();
+                    startPeerConnection();
+                    createOffer();
                 }
-                loadUserStream();
             }
         }
     });
@@ -198,11 +210,17 @@
             shareScreen: function () {
                 this.open = !this.open;
                 if (this.open === true) {
+                    $("#localClient").css({"z-index": 3});
                     displayMediaConstraints.video = true;
+                    loadDisplayStream();
+                    startPeerConnection();
+                    createOffer();
                 } else {
+                    $("#localClient").css({"z-index": 1});
                     displayMediaConstraints.video = false;
+                    loadDisplayStream();
+                    Connection.close();
                 }
-                loadDisplayStream();
             }
         }
     });
@@ -210,7 +228,47 @@
     let recordScreenVm = new Vue({
         el: '#record-screen',
         data: {
-            open: false
+            open: false,
+        },
+        methods: {
+            showOrHide: function() {
+                this.open = !this.open;
+                let stream, mediaRecorder;
+                if (this.open === true) {
+                    
+                    let stream = navigator.mediaDevices.getDisplayMedia({
+                        video: true
+                    });
+
+                    // 需要更好的浏览器支持
+                    const mime = MediaRecorder.isTypeSupported("video/webm; codecs=vp9") 
+                                ? "video/webm; codecs=vp9" 
+                                : "video/webm"
+                    let mediaRecorder = new MediaRecorder(stream, {
+                        mimeType: mime
+                    })
+                
+                    let chunks = []
+                    mediaRecorder.addEventListener('dataavailable', function(e) {
+                        chunks.push(e.data)
+                    })
+            
+                    // 必须手动启动
+                    mediaRecorder.start()
+                } else {
+                    mediaRecorder.current?.stop();
+                    stream.getTracks().forEach((track) => track.stop());
+                    let blob = new Blob(chunks, {
+                        type: chunks[0].type
+                    })
+                    let url = URL.createObjectURL(blob)
+            
+                    let a = document.createElement('a')
+                    a.href = url
+                    a.download = 'video.webm'
+                    a.click()
+                }
+            }
         }
     });
 
@@ -222,9 +280,11 @@
         },
         methods: {
             watchVideo(member) {
+                $("#remoteClient").css({"z-index": 3});
                 createOffer();
             },
             watchScreen(member) {
+                $("#remoteClient").css({"z-index": 3});
                 createOffer();
             }
         },
@@ -393,7 +453,7 @@
 
     // 加载用户摄像头、麦克风捕获的媒体流
     function loadUserStream() {
-        navigator.mediaDevices.getUserMedia(
+        stream = navigator.mediaDevices.getUserMedia(
             userMediaConstraints
         ).then((stream) => {
             localClient.srcObject = stream;
@@ -448,6 +508,7 @@
         }
         // 绑定addstream事件，用户一旦addstream则将媒体流数据放到remoteClient播放器
         Connection.onaddstream = function(e) {
+            $("#remoteClient").css({"z-index": 3});
             remoteClient.srcObject = e.stream;
         }
     }
@@ -552,7 +613,7 @@
         }
 
         // 加载完ws动作后建立P2P连接，等待用户进一步动作
-        startPeerConnection();
+        // startPeerConnection();
     }
 
     // 用户点击发送消息后触发的函数

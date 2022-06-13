@@ -34,7 +34,7 @@ class StudentHandler(tornado.web.RequestHandler, ABC):
                 where teacherName = '{TC["teacherName"]}' and courseID = '{courseID}'
             """)[0]
             course["clock"], course["status"] = res["clock"], res["status"]
-            if course["status"]:
+            if course["status"] == 1:
                 self.current_course["name"] = course["name"]
                 self.current_course["teacherName"] = course["teacherName"]
                 self.current_course["id"] = courseID

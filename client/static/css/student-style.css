@@ -148,6 +148,8 @@ td {
     background-color: #FFFFFF;
     border-radius: 8px;
     border: solid 2px lightgrey;
+    text-align: center;
+    top: 10px;
 }
 
 embed {
