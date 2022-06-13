@@ -271,6 +271,16 @@ const app = new Vue({
 
 原来想通过`static_url()`函数实现，但是这个函数的文件路径参数包含部分变量，且原理貌似是将路径字符串直接传给后端，因此字符串拼接操作无法进行，后来尝试格式化也不行（因为传递的是原生字符串，前端没有格式化直接交给后端，后端解析失败导致无法下载）。
 
+### 文件上传
+由于我们期望文件上传后保持在当前界面，而不是发生跳转。如果使用`form`提交表单，则会发生跳转，除非使用一个`iframe`作为`form.target`属性，之后提交表单后仍然能够停留在原来的界面。但是，这样在实际操作时会导致`iframe`和`vue`组件产生冲突，`vue`组件无法正常加载。
+为了解决这个问题，实际使用的是`jQuery`中的`ajax + FormData`实现二进制文件的异步传输。我们隐藏上传文件的`input`组件，在点击图标时隐式调用点击命令，一旦选择文件，就触发`ajax`的`POST`指令。
+使用`FormData`可以异步传输二进制文件，详细的教程可以参考：(ajax文件上传)[https://www.cnblogs.com/Renyi-Fan/p/9581951.html]。
+另外，在使用`jQuery`时，需要使用正确的版本，否则浏览器将会出现错误信息：
+```js
+TypeError: $.ajax(...) is not a function?
+```
+具体的解决方案可以参考：(TypeError: $.ajax(...) is not a function?)[https://stackoverflow.com/questions/18271251/typeerror-ajax-is-not-a-function]，原因是使用了`slim build of jQuery`，不包含`ajax`，应该使用`<script src="https://code.jquery.com/jquery-3.1.1.min.js">`。
+
 ## 开发环境
 ### 开发环境的设置
 由于开发时遇到一些小问题，导致pycharm中的项目无法通过内置插件将暂存的文件同步到远程的代码仓库，因此后来进行代码同步时使用vscode。vscode+各类插件可以给用户很好的开发体验，虽然在代码检测、提示上相较于pycharm这样的IDE还有所欠缺，但是vscode使用的体验就是定制化更高，更加有geek的感觉。
