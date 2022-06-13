@@ -26,6 +26,7 @@ if __name__ == '__main__':
         (r'/student/user-web', StudentHandler),
         (r'/student/add-course', StudentAddCourseHander),
         (r'/live', LiveHandler),
+        (r'/uploadFile', UpLoadFileHandler),
         (r'/ws', WSHandler),
     ]
     template_path = os.path.join(os.path.dirname(__file__), "view")

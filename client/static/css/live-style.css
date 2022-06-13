@@ -112,13 +112,13 @@ body {
     left: 320px;
 }
 
-#member {
+#members {
     left: 390px;
 }
 
 #member-list {
     position: absolute;
-    top: 300px;
+    top: 308px;
     left: 400px;
     height: 250px;
     width: 320px;
@@ -160,13 +160,46 @@ body {
     left: 530px;
 }
 
+#file-list {
+    position: absolute;
+    left: 530px;
+    top: 350px;
+    height: 208px;
+    width: 300px;
+    background-color: white;
+    display: none;
+}
+
+.file-item {
+    position: relative;
+    width: 100%;
+    height: 20%;
+    border: solid black;
+    border-width: 0 0 2px 0;
+}
+
+.file-name {
+    position: relative;
+    top: 12px;
+    left: 15px;
+    font-size: 16px;
+}
+
+.file-download-btn {
+    position: absolute;
+    left: 240px;
+    height: 25px;
+    width: 40px;
+    top: 8px;
+}
+
 #apps {
     left: 600px;
 }
 
 #app-list {
     position: absolute;
-    top: 370px;
+    top: 378px;
     left: 600px;
     height: 180px;
     width: 180px;
@@ -178,6 +211,7 @@ body {
     position: relative;
     width: 80px;
     padding: 5px;
+    top: 5px;
     display: inline-block;
 }
 

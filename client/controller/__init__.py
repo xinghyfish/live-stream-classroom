@@ -3,6 +3,7 @@ sys.path.append("..")
 from abc import ABC
 import tornado.web
 from model import db
+import os
 
 
 class HelloHandler(tornado.web.RequestHandler, ABC):
@@ -91,3 +92,15 @@ class LiveHandler(tornado.web.RequestHandler, ABC):
         teacherName = self.get_argument("teacherName")
         courseName = self.get_argument("courseName")
         return self.render("live.html", teacherName=teacherName, courseName=courseName)
+
+
+class UpLoadFileHandler(tornado.web.RequestHandler, ABC):
+    def post(self):
+        file = self.request.files["file"][0]
+        filename = file["filename"]
+        body = file["body"]
+        teacherName = self.get_argument("teacherName")
+        courseName = self.get_argument("courseName")
+        filepath = os.path.join(os.getcwd(), "static/resources/file/%s/%s/" % (teacherName, courseName))
+        with open(filepath + filename, 'wb') as f:
+            f.write(body)

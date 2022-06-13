@@ -1,5 +1,6 @@
 import sys
 import os.path
+import os
 from datetime import datetime
 import time
 import json
@@ -25,8 +26,11 @@ class WSHandler(WebSocketHandler, ABC):
             filepath = os.path.join(os.getcwd(), "static/resources/history/%s/%s/" % (teacherName, courseName))
             filename = self.pools[teacherName][courseName].user_dict[user] + ".txt"    
         elif type == "signup":
-            filepath = os.path.join(os.getcwd(), "static/resources/history/%s/" % (teacherName))
+            filepath = os.path.join(os.getcwd(), "static/resources/signup/%s/" % (teacherName))
             filename = courseName + ".txt"
+        elif type == "file":
+            filepath = os.path.join(os.getcwd(), "static/resources/file/%s/%s/" % (teacherName, courseName))
+            return os.listdir(filepath)
         else:
             print("Json Invalid Property <type>: expected \"message\" or \"signup\", but given \"%s\"" % type)
             return None
@@ -135,6 +139,12 @@ class WSHandler(WebSocketHandler, ABC):
                         "key": jsonMessage["key"],
                         "data": jsonMessage["data"]
                     }));
+        elif jsonMessage["type"] == "offer-file-list":
+            files = self.file_path(self, "file")
+            self.write_message(json.dumps({
+                "type": "answer-file-list",
+                "filelist": files
+            }))
         else:
             print("Json Invalid Property <type>: given \"%s\"" % jsonMessage["type"])
         
