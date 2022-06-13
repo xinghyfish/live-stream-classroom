@@ -241,3 +241,23 @@ embed {
     top: 6px;
     left: 50px;
 }
+
+#intro {
+    position: relative;
+    left: 350px;
+    top: 100px;
+    width: 600px;
+    border: dotted 5px;
+    border-radius: 5px;
+    padding: 20px;
+}
+
+h2 {
+    position: relative;
+    text-align: center;
+    height: 36px;
+}
+
+p {
+    font-size: 18px;
+}
