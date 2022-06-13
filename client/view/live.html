@@ -22,6 +22,12 @@
             <div class="app-name">[[ app.name ]]</div>
         </div>
 	</div>
+    <div id="file-list" class="pop-div">
+        <div class="file-item" v-for="file in files">
+            <span class="file-name">[[ file ]]</span>
+            <button class="file-download-btn" @click="download(file)">下载</button>
+        </div>
+    </div>
 
     <div id="course-info">
         <img src="../static/avatars/{{ teacherName }}.jpg"  id="avatar" alt="头像"></img>
@@ -59,7 +65,7 @@
                 <span v-else>开始共享</span>
             </div>
         </div>
-        <div id="member" class="item" @click="showMemberList()">
+        <div id="members" class="item" @click="showOrHide()">
             <img src="../static/icons/好友.svg" alt="查看成员" class="icon">
             <div class="caption">查看成员</div>
         </div>
@@ -71,13 +77,13 @@
                 <span v-else>开始录制</span>
             </div>
         </div>
-        <div id="files" class="item">
+        <div id="files" class="item" @click="showOrHide()">
             <img src="../static/icons/文件夹.svg" alt="在线文件" class="icon">
             <div class="caption">
                 <span>在线文件</span>
             </div>
         </div>
-        <div id="apps" class="item" @click="showApps()">
+        <div id="apps" class="item" @click="showOrHide()">
             <img src="../static/icons/应用.svg" alt="应用" class="icon">
             <div class="caption">
                 <span>查看应用</span>
@@ -105,7 +111,7 @@
     </div>
     <div id="emoji-part">
         <img class="emoji" src="../static/icons/表情.svg" alt="表情">
-        <img class="emoji" src="../static/icons/上传文件.svg" alt="上传文件">
+        <img class="emoji" id="uploadFile" src="../static/icons/上传文件.svg" alt="上传文件">
     </div>
     <div id="input-part">
         <textarea class="text" id="user-input" placeholder="输入消息…"></textarea>
@@ -119,209 +125,13 @@
 <script src="../static/js/vue.js"></script>
 <script type="text/javascript" src="../static/js/functions.js"></script>
 <script>
-    // 声明全局变量
+    /* 1. 声明全局变量 */
     const username = get_cookie("username");
     let teacherName = '{{ teacherName }}', courseName = '{{ courseName }}';
     var ws; // ws连接
     let localClient = document.getElementById("localClient");
     let remoteClient = document.getElementById("remoteClient");
     let Connection;
-
-	let historyVm = new Vue({
-        el: '#chat-body',
-        data: {
-            messages: [],
-        },
-    });
-
-    const microphoneVm = new Vue({
-        el: '#microphone',
-        data: {
-            open: false
-        },
-        methods: {
-            microphone: function() {
-                this.open = !this.open;
-            }
-        }
-    });
-
-    const cameraVm = new Vue({
-        el: '#camera',
-        data: {
-            open: false
-        },
-        methods: {
-            camera: function () {
-                this.open = !this.open;
-                if (this.open === false) {
-                    userMediaConstraints.video = false;
-                } else {
-                    userMediaConstraints.video = true;
-                }
-                loadUserStream();
-            }
-        }
-    });
-
-    const shareScreenVm = new Vue({
-        el: '#share-screen',
-        data: {
-            open: false
-        },
-        methods: {
-            shareScreen: function () {
-                this.open = !this.open;
-                if (this.open === true) {
-                    displayMediaConstraints.video = true;
-                } else {
-                    displayMediaConstraints.video = false;
-                }
-                loadDisplayStream();
-            }
-        }
-    });
-
-    const recordScreenVm = new Vue({
-        el: '#record-screen',
-        data: {
-            open: false
-        }
-    });
-
-    const memberListVm = new Vue({
-        delimiters: ['[[', ']]'],
-        el: '#member-list',
-        data: {
-            members: []
-        },
-        methods: {
-            watchVideo(member) {
-                createOffer();
-            },
-            watchScreen(member) {
-                createOffer();
-            }
-        },
-        computed: {
-            isShow() {
-                return this.members && this.members.length > 0
-            }
-		}
-    });
-
-	const memberVm = new Vue({
-		el: '#member',
-		data: {
-			open: false,
-		},
-		methods: {
-			showMemberList: function() {
-				ws.send(JSON.stringify({
-                    type: "offer-member-list"
-                }));
-                this.open = !this.open;
-                appVm.open = false;
-                this.showOrHide();
-                appVm.showOrHide();
-			},
-
-			showOrHide: function() {
-				const memberList = document.getElementById('member-list');
-				if (this.open) memberList.style.display = "block";
-				else memberList.style.display = "none";
-			}
-		},
-	});
-
-    const peopleCountVm = new Vue({
-        delimiters: ['[[', ']]'],
-        el: '#people-count',
-        data: {
-            peopleCount: 0
-        },
-    });
-
-	const appVm = new Vue({
-		el: '#apps',
-		data: {
-			open: false
-		},
-		methods: {
-			showApps: function() {
-				this.open = !this.open;
-				memberVm.open = false;
-				this.showOrHide();
-				memberVm.showOrHide();
-			},
-			showOrHide: function() {
-				const appList = document.getElementById('app-list');
-				if (this.open) appList.style.display = 'block';
-				else appList.style.display = 'none';
-			}
-		}
-	});
-
-    const appListVm = new Vue({
-        delimiters: ['[[', ']]'],
-        el: '#app-list',
-        data: {
-            apps: [
-                { event: 'drawEvent', name: '白板', icon: '../static/icons/白板.svg' },
-                { event: 'singupEvent', name: '签到', icon: '../static/icons/签到.svg'},
-                { event: 'downloadChatRecord', name: '聊天记录', icon: '../static/icons/聊天记录.svg'},
-                { event: 'downloadSignupRecord', name: '签到记录', icon: '../static/icons/数据汇总.svg'},
-            ]
-        },
-        methods: {
-            // 下载功能封装
-            downloadFile: function(href, title) {
-                const a = document.createElement('a');
-                a.style = "display: none";
-                a.href = href;
-                // 添加download属性，防止打开文件
-                a.download = title;
-                document.body.append(a);
-                a.click();
-                document.body.removeChild(a);
-                a.remove();
-            },
-            getLists: function(itemMethods) {
-                if (itemMethods == "drawEvent") {
-                    this.drawEvent();
-                } else if (itemMethods == "signupEvent") {
-                    this.signupEvent();
-                } else if (itemMethods == "downloadChatRecord") {
-                    this.downloadChatRecord();
-                } else if (itemMethods == "downloadSignupRecord") {
-                    this.downloadSignupRecord();
-                } else {
-                    alert("非法指令！");
-                }
-            },
-            drawEvent: function() {
-                window.location.href = "/draw";
-            },
-            signupEvent: function() {
-                if (username !== '{{ teacherName }}')
-                    alert("您的身份不是教师，无法发布签到内容！");
-                else
-                    ws.send(JSON.stringify({ type: "offer-signup" }));
-            },
-            downloadChatRecord: function() {
-                let href = `/static/resources/history/${teacherName}/${courseName}/${username}.txt`;
-                console.log(href);
-                let filename = `${teacherName}老师的${courseName}课程的聊天记录`;
-                this.downloadFile(href, filename);
-            },
-            downloadSignupRecord: function() {
-                let href = `/static/resources/signup/${teacherName}/${courseName}.txt`;
-                let filename = `${courseName}课程考勤表`;
-                this.downloadFile(href, filename);
-            }
-        }
-    });
-
     // 初始化用户媒体约束
     let userMediaConstraints = {
         audio: true,
@@ -332,7 +142,308 @@
         audio: true,
         video: false,
     }
+    let microphoneVm, cameraVm, shareScreenVm, recordScreenVm, memberVm, appVm, fileVm, peopleCountVm;
+    let memberListVm, appListVm, fileListVm;
+    
+    /* 2. 加载Vue组件 */
+    function loadVue() {
+        /* Vue组件区域 */
+        microphoneVm = new Vue({
+            el: '#microphone',
+            data: {
+                open: false
+            },
+            methods: {
+                microphone: function() {
+                    this.open = !this.open;
+                }
+            }
+        });
 
+        cameraVm = new Vue({
+            el: '#camera',
+            data: {
+                open: false
+            },
+            methods: {
+                camera: function () {
+                    this.open = !this.open;
+                    if (this.open === false) {
+                        userMediaConstraints.video = false;
+                    } else {
+                        userMediaConstraints.video = true;
+                    }
+                    loadUserStream();
+                }
+            }
+        });
+
+        shareScreenVm = new Vue({
+            el: '#share-screen',
+            data: {
+                open: false
+            },
+            methods: {
+                shareScreen: function () {
+                    this.open = !this.open;
+                    if (this.open === true) {
+                        displayMediaConstraints.video = true;
+                    } else {
+                        displayMediaConstraints.video = false;
+                    }
+                    loadDisplayStream();
+                }
+            }
+        });
+
+        recordScreenVm = new Vue({
+            el: '#record-screen',
+            data: {
+                open: false
+            }
+        });
+
+        memberListVm = new Vue({
+            delimiters: ['[[', ']]'],
+            el: '#member-list',
+            data: {
+                members: []
+            },
+            methods: {
+                watchVideo(member) {
+                    createOffer();
+                },
+                watchScreen(member) {
+                    createOffer();
+                }
+            },
+            computed: {
+                isShow() {
+                    return this.members && this.members.length > 0
+                }
+            }
+        });
+
+        memberVm = new Vue({
+            el: '#members',
+            data: {
+                open: false,
+            },
+            methods: {
+                showOrHide: function() {
+                    ws.send(JSON.stringify({
+                        type: "offer-member-list"
+                    }));
+                    this.open = !this.open;
+                    const memberList = document.getElementById('member-list');
+                    if (this.open) {
+                        memberList.style.display = "block";
+                        hideOtherMenu(this);
+                    } else {
+                        memberList.style.display = "none";
+                    }
+                },
+            },
+        });
+
+        peopleCountVm = new Vue({
+            delimiters: ['[[', ']]'],
+            el: '#people-count',
+            data: {
+                peopleCount: 0
+            },
+        });
+
+        appVm = new Vue({
+            el: '#apps',
+            data: {
+                open: false
+            },
+            methods: {
+                showOrHide: function() {
+                    this.open = !this.open;
+                    const appList = document.getElementById('app-list');
+                    if (this.open === true) {
+                        appList.style.display = 'block';
+                        hideOtherMenu(this);
+                    } else {
+                        appList.style.display = 'none';
+                    } 
+                },
+            },
+        });
+
+        appListVm = new Vue({
+            delimiters: ['[[', ']]'],
+            el: '#app-list',
+            data: {
+                apps: [
+                    { event: 'drawEvent', name: '白板', icon: '../static/icons/白板.svg' },
+                    { event: 'singupEvent', name: '签到', icon: '../static/icons/签到.svg'},
+                    { event: 'downloadChatRecord', name: '聊天记录', icon: '../static/icons/聊天记录.svg'},
+                    { event: 'downloadSignupRecord', name: '签到记录', icon: '../static/icons/数据汇总.svg'},
+                ]
+            },
+            methods: {
+                // 在组件生命周期结束时销毁
+                beforeDestroy() {
+                    window.removeEventListener('click', () => {}, true)
+                },
+                getLists: function(itemMethods) {
+                    if (itemMethods == "drawEvent") {
+                        this.drawEvent();
+                    } else if (itemMethods == "signupEvent") {
+                        this.signupEvent();
+                    } else if (itemMethods == "downloadChatRecord") {
+                        this.downloadChatRecord();
+                    } else if (itemMethods == "downloadSignupRecord") {
+                        this.downloadSignupRecord();
+                    } else {
+                        alert("非法指令！");
+                    }
+                },
+                drawEvent: function() {
+                    window.location.href = "/draw";
+                },
+                signupEvent: function() {
+                    if (username !== '{{ teacherName }}')
+                        alert("您的身份不是教师，无法发布签到内容！");
+                    else
+                        ws.send(JSON.stringify({ type: "offer-signup" }));
+                },
+                downloadChatRecord: function() {
+                    let href = `/static/resources/history/${teacherName}/${courseName}/${username}.txt`;
+                    console.log(href);
+                    let filename = `${teacherName}老师的${courseName}课程的聊天记录`;
+                    downloadFile(href, filename);
+                },
+                downloadSignupRecord: function() {
+                    let href = `/static/resources/signup/${teacherName}/${courseName}.txt`;
+                    let filename = `${courseName}课程考勤表`;
+                    downloadFile(href, filename);
+                }
+            }
+        });
+
+        fileVm = new Vue({
+            el: '#files',
+            data: {
+                open: false
+            },
+            methods: {
+                showOrHide: function() {
+                    ws.send(JSON.stringify({
+                        type: "offer-file-list"
+                    }));
+                    this.open = !this.open;
+                    const fileList = document.getElementById('file-list');
+                    if (this.open === true) {
+                        fileList.style.display = 'block';
+                        hideOtherMenu(this);
+                    } else {
+                        fileList.style.display = 'none';
+                    }
+                }
+            }
+        });
+
+        fileListVm = new Vue({
+            delimiters: ["[[", "]]"],
+            el: '#file-list',
+            data: {
+                files: []
+            },
+            methods: {
+                download: function(file) {
+                    let filepath = `/static/resources/file/${teacherName}/${courseName}/${file}`;
+                    downloadFile(filepath, file);
+                }
+            }
+        });
+
+        let menuList = [memberVm, appVm, fileVm];
+        
+        function hideOtherMenu(thisMenu) {
+            for (let i = 0; i < menuList.length; ++i) {
+                if (menuList[i] !== thisMenu && menuList[i].open === true) {
+                    menuList[i].showOrHide();
+                }
+            }
+        }
+    }
+
+    /* 3. 加载并初始化websocket */
+    function loadWebSocket() {
+        ws = new WebSocket("ws://" + window.location.host + "/ws?teacherName=" + '{{ teacherName }}' + "&courseName=" + '{{ courseName }}')
+        ws.onopen = function () {
+            ws.send(JSON.stringify({ type: "open-connection", account: username }));
+        }
+
+        ws.onmessage = function (e) {
+            let message = JSON.parse(e.data);
+            if (!message) {
+                console.log("websocket消息为空!");
+            }
+            if (message.type === "close-connection") {
+                ws.close();
+            } else if (message.type === "user-message") {
+                var rendered_text =  
+                    '<div class="chat_left_item_1 ">' + message.account + '</div>' + 
+                    '<div class="chat_left_item_2">' + 
+                        '<div class="chat_time">' + message.time + '</div>' + 
+                        '<div class="chat_left_content">' + 
+                            message.message + 
+                        '</div>' + 
+                    '</div>';
+                var newDiv = document.createElement("div");
+                newDiv.setAttribute("class", "chat_left clearfixt");
+                newDiv.innerHTML = rendered_text;
+                var chatBody = document.getElementById("chat-body");
+                chatBody.append(newDiv);
+                chatBody.scrollTop = chatBody.scrollHeight;
+            } else if (message.type === "answer-signup") {
+                let info = {
+                    type: "answer-signup",
+                    status: null,
+                    account: username,
+                    start_time: null
+                }
+                var signupWin = confirm("签到提醒");
+                if (signupWin == true) {
+                    info.start_time = new Date();
+                    info.status = "confirm";
+                    ws.send(info);
+                } else {
+                    info.status = "refuse";
+                    ws.send(info);
+                }
+            } else if (message.type === "count-change") {
+                peopleCountVm.peopleCount = message.count;
+            } else if (message.type === "answer-member-list") {
+                memberListVm.members = message.memberlist
+            } else if (message.type === "webrtc") {
+                if (message.key === "candidate" && message.data.candidate) {
+                    Connection.addIceCandidate(new RTCIceCandidate(message.data.candidate));
+                } else if (message.key === "offer") {
+                    Connection.setRemoteDescription(message.data.sdp);
+                    createAnswer();
+                } else if (message.key == "answer") {
+                    Connection.setRemoteDescription(message.data.sdp);
+                }
+            } else if (message.type === "answer-file-list") {
+                fileListVm.files = message.filelist;
+            }
+        }
+
+        ws.onclose = function () {
+            if (username !== '{{ teacherName }}')
+                window.location.href = "/student/user-web";
+            else
+                window.location.href = "/teacher/user-web";
+        }
+    }
+    
+    /* 4. WebRTC逻辑区域 */
     // 加载用户摄像头、麦克风捕获的媒体流
     function loadUserStream() {
         navigator.mediaDevices.getUserMedia(
@@ -423,78 +534,18 @@
         });
     }
 
+    /* 5. 初始化加载区 */
     // 规定了客户端websocket通信的格式（使用JSON）
     function onLoad() {
-        ws = new WebSocket("ws://" + window.location.host + "/ws?teacherName=" + '{{ teacherName }}' + "&courseName=" + '{{ courseName }}')
-        ws.onopen = function () {
-            ws.send(JSON.stringify({ type: "open-connection", account: username }));
-        }
-
-        ws.onmessage = function (e) {
-            let message = JSON.parse(e.data);
-            if (!message) {
-                console.log("websocket消息为空!");
-            }
-            if (message.type === "close-connection") {
-                ws.close();
-            } else if (message.type === "user-message") {
-                var rendered_text =  
-                    '<div class="chat_left_item_1 ">' + message.account + '</div>' + 
-                    '<div class="chat_left_item_2">' + 
-                        '<div class="chat_time">' + message.time + '</div>' + 
-                        '<div class="chat_left_content">' + 
-                            message.message + 
-                        '</div>' + 
-                    '</div>';
-                var newDiv = document.createElement("div");
-                newDiv.setAttribute("class", "chat_left clearfixt");
-                newDiv.innerHTML = rendered_text;
-                var chatBody = document.getElementById("chat-body");
-                chatBody.append(newDiv);
-                chatBody.scrollTop = chatBody.scrollHeight;
-            } else if (message.type === "answer-signup") {
-                let info = {
-                    type: "answer-signup",
-                    status: null,
-                    account: username,
-                    start_time: null
-                }
-                var signupWin = confirm("签到提醒");
-                if (signupWin == true) {
-                    info.start_time = new Date();
-                    info.status = "confirm";
-                    ws.send(info);
-                } else {
-                    info.status = "refuse";
-                    ws.send(info);
-                }
-            } else if (message.type === "count-change") {
-                peopleCountVm.peopleCount = message.count;
-            } else if (message.type === "answer-member-list") {
-                memberListVm.members = message.memberlist
-            } else if (message.type === "webrtc") {
-                if (message.key === "candidate" && message.data.candidate) {
-                    Connection.addIceCandidate(new RTCIceCandidate(message.data.candidate));
-                } else if (message.key === "offer") {
-                    Connection.setRemoteDescription(message.data.sdp);
-                    createAnswer();
-                } else if (message.key == "answer") {
-                    Connection.setRemoteDescription(message.data.sdp);
-                }
-            }
-        }
-
-        ws.onclose = function () {
-            if (username !== '{{ teacherName }}')
-                window.location.href = "/student/user-web";
-            else
-                window.location.href = "/teacher/user-web";
-        }
-
+        // 加载Vue组件
+        loadVue();
+        // 加载WebSocket并初始化连接的回调动作
+        loadWebSocket();
         // 加载完ws动作后建立P2P连接，等待用户进一步动作
         startPeerConnection();
     }
 
+    /* 6. 辅助函数区 */
     // 用户点击发送消息后触发的函数
     function sendMessage() {
         let text = document.getElementById('user-input').value;
@@ -528,5 +579,8 @@
         ws.close();
     }
 
+    function uploadFile() {
+        let 
+    }
 </script>
 </html>
