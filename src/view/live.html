@@ -350,7 +350,7 @@
         data: {
             apps: [
                 { event: 'drawEvent', name: '白板', icon: '../static/icons/白板.svg' },
-                { event: 'singupEvent', name: '签到', icon: '../static/icons/签到.svg'},
+                { event: 'signupEvent', name: '签到', icon: '../static/icons/签到.svg'},
                 { event: 'downloadChatRecord', name: '聊天记录', icon: '../static/icons/聊天记录.svg'},
                 { event: 'downloadSignupRecord', name: '签到记录', icon: '../static/icons/数据汇总.svg'},
             ]
@@ -582,10 +582,10 @@
                 if (signupWin == true) {
                     info.start_time = new Date();
                     info.status = "confirm";
-                    ws.send(info);
+                    ws.send(JSON.stringify(info));
                 } else {
                     info.status = "refuse";
-                    ws.send(info);
+                    ws.send(JSON.stringify(info));
                 }
             } else if (message.type === "count-change") {
                 peopleCountVm.peopleCount = message.count;

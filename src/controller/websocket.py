@@ -117,7 +117,7 @@ class WSHandler(WebSocketHandler, ABC):
         elif jsonMessage["type"] == "answer-signup":
             filepath = self.file_path(self, "signup")
             student = jsonMessage["account"]
-            signuptime = jsonMessage["start-time"]
+            signuptime = jsonMessage["start_time"]
             with open(filepath, 'a', encoding='utf-8') as fp:
                 if jsonMessage["status"] == 'confirm':
                     fp.write("%s 已签到 %s\n" % (student, signuptime))
