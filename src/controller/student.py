@@ -21,6 +21,7 @@ class StudentHandler(tornado.web.RequestHandler, ABC):
             where studentName = '{username}'
         """)
         courses = []
+        self.current_course = dict()
         for TC in TCs:
             courseID = TC["courseID"]
             course = db.query_data(f"""
